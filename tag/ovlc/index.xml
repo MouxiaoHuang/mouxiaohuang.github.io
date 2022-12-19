@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>OVLC | Mouxiao Huang 黄谋潇</title>
+    <link>https://mouxiaohuang.github.io/tag/ovlc/</link>
+      <atom:link href="https://mouxiaohuang.github.io/tag/ovlc/index.xml" rel="self" type="application/rss+xml" />
+    <description>OVLC</description>
+    <generator>Wowchemy (https://wowchemy.com)</generator><language>en-us</language>
+    <image>
+      <url>https://mouxiaohuang.github.io/media/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_3.png</url>
+      <title>OVLC</title>
+      <link>https://mouxiaohuang.github.io/tag/ovlc/</link>
+    </image>
+    
+    <item>
+      <title>National Undergraduate Innovative and Entrepreneurial Training Program</title>
+      <link>https://mouxiaohuang.github.io/project/vlc/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://mouxiaohuang.github.io/project/vlc/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
