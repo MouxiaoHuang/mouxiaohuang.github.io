@@ -13,7 +13,7 @@
     </image>
     
     <item>
-      <title>Improving Training and Inference of Face Recognition Models via Random Temperature Scaling</title>
+      <title>Improving Training and Inference of Face Recognition Models via Random Temperature Scaling (AAAI2023)</title>
       <link>https://mouxiaohuang.github.io/publication/rts/</link>
       <pubDate>Wed, 30 Nov 2022 00:00:00 +0000</pubDate>
       <guid>https://mouxiaohuang.github.io/publication/rts/</guid>
@@ -60,22 +60,11 @@ Supplementary notes can be added here, including [code, math, and images](https:
     </item>
     
     <item>
-      <title>An example conference paper</title>
-      <link>https://mouxiaohuang.github.io/publication/conference-paper/</link>
-      <pubDate>Mon, 01 Jul 2013 00:00:00 +0000</pubDate>
-      <guid>https://mouxiaohuang.github.io/publication/conference-paper/</guid>
-      <description>&lt;div class=&#34;alert alert-note&#34;&gt;
-  &lt;div&gt;
-    Click the &lt;em&gt;Cite&lt;/em&gt; button above to demo the feature to enable visitors to import publication metadata into their reference management software.
-  &lt;/div&gt;
-&lt;/div&gt;
-&lt;div class=&#34;alert alert-note&#34;&gt;
-  &lt;div&gt;
-    Create your slides in Markdown - click the &lt;em&gt;Slides&lt;/em&gt; button to check out the example.
-  &lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Supplementary notes can be added here, including &lt;a href=&#34;https://wowchemy.com/docs/writing-markdown-latex/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;code, math, and images&lt;/a&gt;.&lt;/p&gt;
-</description>
+      <title>High-Speed Robust Dynamic Positioning and Tracking Method Based on Visual Visible Light Communication Using Optical Flow Detection and Bayesian Forecast</title>
+      <link>https://mouxiaohuang.github.io/publication/journal2/</link>
+      <pubDate>Tue, 29 May 2018 00:00:00 +0000</pubDate>
+      <guid>https://mouxiaohuang.github.io/publication/journal2/</guid>
+      <description></description>
     </item>
     
   </channel>
