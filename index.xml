@@ -7,7 +7,7 @@
     <description>Mouxiao Huang 黄谋潇</description>
     <generator>Wowchemy (https://wowchemy.com)</generator><language>en-us</language><lastBuildDate>Mon, 24 Oct 2022 00:00:00 +0000</lastBuildDate>
     <image>
-      <url>https://mouxiaohuang.github.io/media/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_3.png</url>
+      <url>https://mouxiaohuang.github.io/media/icon_hu2dc7724fe869b15a6fb422cae53b8280_2416_512x512_fill_lanczos_center_3.png</url>
       <title>Mouxiao Huang 黄谋潇</title>
       <link>https://mouxiaohuang.github.io/</link>
     </image>
@@ -236,7 +236,7 @@ data.head()
 
 
 
-&lt;div id=&#34;chart-215896734&#34; class=&#34;chart&#34;&gt;&lt;/div&gt;
+&lt;div id=&#34;chart-572618934&#34; class=&#34;chart&#34;&gt;&lt;/div&gt;
 &lt;script&gt;
   (function() {
     let a = setInterval( function() {
@@ -246,7 +246,7 @@ data.head()
       clearInterval( a );
 
       Plotly.d3.json(&#34;./line-chart.json&#34;, function(chart) {
-        Plotly.plot(&#39;chart-215896734&#39;, chart.data, chart.layout, {responsive: true});
+        Plotly.plot(&#39;chart-572618934&#39;, chart.data, chart.layout, {responsive: true});
       });
     }, 500 );
   })();
