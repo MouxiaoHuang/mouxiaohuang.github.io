@@ -3,13 +3,16 @@
 #
 
 # Name of your site (displayed in the header)
-name: Your Name
+name: Mouxiao Huang 黄谋潇
 
 # Short bio or description (displayed in the header)
-description: Web Developer from Somewhere
+description: Algorithm Engineer @ Huawei
 
 # URL of your avatar or profile pic (you could use your GitHub profile pic)
-avatar: https://raw.githubusercontent.com/barryclark/jekyll-now/master/images/jekyll-logo.png
+# avatar: ./images/avatar.jpg
+avatar: https://github.com/mouxiaohuang/mouxiaohuang.github.io/master/images/avatar.jpg
+# avatar: https://github.com/arazd/arazd.github.io/blob/master/images/profile_pic.jpg
+# https://raw.githubusercontent.com/barryclark/jekyll-now/master/images/jekyll-logo.png
 
 #
 # Flags below are optional
@@ -41,7 +44,7 @@ google_analytics:
 
 # Your website URL (e.g. http://barryclark.github.io or http://www.barryclark.co)
 # Used for Sitemap.xml and your RSS feed
-url:
+url: https://mouxiaohuang.github.io
 
 # If you're hosting your site at a Project repository on GitHub pages
 # (http://yourusername.github.io/repository-name)

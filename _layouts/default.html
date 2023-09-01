@@ -11,26 +11,41 @@
 
     <link rel="stylesheet" type="text/css" href="{{ site.baseurl }}/style.css" />
     <link rel="alternate" type="application/rss+xml" title="{{ site.name }} - {{ site.description }}" href="{{ site.baseurl }}/feed.xml" />
+    <link rel="shortcut icon" type="image/x-icon" href="/avatar.ico"/>
 
     <!-- Created with Jekyll Now - http://github.com/barryclark/jekyll-now -->
+    <meta name="google-site-verification" content="TyyNdXGnzIVCPVHKNbHPgaj8OBCSEhRmJ6JK4etwokA" />
   </head>
 
   <body>
     <div class="wrapper-masthead">
       <div class="container">
+
         <header class="masthead clearfix">
-          <a href="{{ site.baseurl }}/" class="site-avatar"><img src="{{ site.avatar }}" /></a>
+          <!-- <a href="{{ site.baseurl }}/" class="site-avatar"><img src="{{ site.avatar }}" /></a> -->
+
+          <!-- <nav>
+
+           <a href="{{ site.baseurl }}/">Blog</a>
+            <a href="{{ site.baseurl }}/about">About</a>
+
+          </nav> -->
+
 
           <div class="site-info">
             <h1 class="site-name"><a href="{{ site.baseurl }}/">{{ site.name }}</a></h1>
             <p class="site-description">{{ site.description }}</p>
           </div>
 
+
           <nav>
-            <a href="{{ site.baseurl }}/">Blog</a>
-            <a href="{{ site.baseurl }}/about">About</a>
+            <a href="{{ site.baseurl }}/#Experience">Work Experience</a>
+            <a href="{{ site.baseurl }}/#Research">Research</a>
+            <a href="{{ site.baseurl }}/#Awards">Awards</a>
+            <a href="../Resume_Mouxiao_Huang.pdf">CV</a>
           </nav>
         </header>
+
       </div>
     </div>
 
@@ -38,13 +53,13 @@
       {{ content }}
     </div>
 
-    <div class="wrapper-footer">
+    <!-- <div class="wrapper-footer">
       <div class="container">
         <footer class="footer">
           {% include svg-icons.html %}
         </footer>
       </div>
-    </div>
+    </div> -->
 
     {% include analytics.html %}
   </body>
