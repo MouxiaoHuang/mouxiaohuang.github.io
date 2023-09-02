@@ -9,6 +9,21 @@
 @import "variables";
 // Syntax highlighting @import is at the bottom of this file
 
+/* 定义深色模式的颜色 */
+:root {
+  --bg: rgb(30,30,34);
+  --textColor: rgb(150,150,154);
+  --borderColor: #2C2C3A;
+}
+/* 根据系统的深色模式响应深色变量 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: rgb(30,30,34);
+    --textColor: rgb(150,150,154);
+    --borderColor: #2C2C3A;
+  }
+}
+
 /**************/
 /* BASE RULES */
 /**************/
