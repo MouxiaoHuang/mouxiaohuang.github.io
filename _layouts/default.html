@@ -109,9 +109,12 @@
         function updateLabel() {
           var t = currentTheme();
           var effective = t || systemTheme();
-          btn.textContent = effective === "dark" ? "深色" : "浅色";
-          btn.setAttribute("aria-label", "切换主题（当前：" + (effective === "dark" ? "深色" : "浅色") + "）");
-          btn.title = "点击切换深/浅色（记住你的选择）";
+          btn.textContent = effective === "dark" ? "🌙" : "☀️";
+          btn.setAttribute(
+            "aria-label",
+            "Toggle color theme (current: " + (effective === "dark" ? "dark" : "light") + ")"
+          );
+          btn.title = "Click to toggle dark/light theme (saved for next visit)";
         }
 
         btn.addEventListener("click", function () {

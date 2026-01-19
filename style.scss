@@ -425,6 +425,25 @@ nav {
   }
 }
 
+/* Dark-mode tweaks for logos/icons to keep them visible */
+html[data-theme="dark"] {
+  img {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  .icon img,
+  .emoj img {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 999px;
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.4);
+  }
+
+  .float {
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  }
+}
+
 //
 // .main
 //
