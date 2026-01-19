@@ -270,6 +270,12 @@ img {
   overflow: auto;
 }
 
+.date-right {
+  float: right;
+  font-style: italic;
+  color: var(--muted);
+}
+
 .gmnoprint img {
   max-width: none;
 }
