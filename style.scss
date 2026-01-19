@@ -317,9 +317,9 @@ img {
   padding: 20px 0;
   border-bottom: 1px solid var(--border);
 
-  // @include mobile {
-  //   text-align: center;
-  // }
+  @include mobile {
+    padding: 15px 0;
+  }
 }
 
 // .site-avatar {
@@ -341,12 +341,11 @@ img {
 
 .site-info {
   float: left;
-  // display: flex;
-  // @include mobile {
-  //   float: none;
-  //   display: block;
-  //   margin: 0 auto;
-  // }
+
+  @include mobile {
+    float: none;
+    margin-bottom: 12px;
+  }
 }
 
 .site-name {
@@ -357,6 +356,10 @@ img {
   font-weight: 300;
   font-size: 28px;
   letter-spacing: 1px;
+
+  @include mobile {
+    font-size: 24px;
+  }
 }
 
 .site-description {
@@ -380,12 +383,15 @@ nav {
   font-family: $helveticaNeue;
   font-size: 18px;
 
-  // @include mobile {
-  //   float: none;
-  //   margin-top: 9px;
-  //   display: block;
-  //   font-size: 16px;
-  // }
+  @include mobile {
+    float: none;
+    margin-top: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    font-size: 15px;
+  }
 
   a {
     margin-left: 20px;
@@ -393,10 +399,13 @@ nav {
     text-align: right;
     font-weight: 300;
     letter-spacing: 1px;
+    white-space: nowrap;
 
     @include mobile {
-      margin: 0 10px;
+      margin: 0;
       color: var(--link);
+      text-align: left;
+      font-size: 15px;
     }
   }
 }
@@ -412,6 +421,7 @@ nav {
   background: transparent;
   color: var(--text);
   cursor: pointer;
+  white-space: nowrap;
 
   &:hover, &:active {
     text-decoration: none;
@@ -419,9 +429,10 @@ nav {
   }
 
   @include mobile {
-    margin-left: 10px;
+    margin-left: 0;
     padding: 5px 9px;
     font-size: 13px;
+    flex-shrink: 0;
   }
 }
 
