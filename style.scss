@@ -9,6 +9,77 @@
 @import "variables";
 // Syntax highlighting @import is at the bottom of this file
 
+/********************/
+/* THEME (AUTO)     */
+/********************/
+
+:root {
+  /* Let the UA pick proper form control colors in light/dark */
+  color-scheme: light dark;
+
+  /* Base palette (light) */
+  --bg: #{$white};
+  --surface: #{$lightGray};
+  --text: #{$darkGray};
+  --text-strong: #{$darkerGray};
+  --muted: #{$gray};
+  --border: #{$lightGray};
+  --link: #{$blue};
+  --link-hover: #{$blue};
+  --selection-bg: #{$lightGray};
+  --selection-text: #{$black};
+
+  /* Code block */
+  --code-bg: #efefef;
+  --code-border: #ddd;
+  --code-text: #{$darkGray};
+}
+
+/* Manual override (persisted via JS by setting <html data-theme="...">) */
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b0f17;
+  --surface: #121826;
+  --text: #e6edf3;
+  --text-strong: #f0f6fc;
+  --muted: #9aa4b2;
+  --border: #263043;
+  --link: #7ab7ff;
+  --link-hover: #a6d2ff;
+  --selection-bg: #22314d;
+  --selection-text: #f0f6fc;
+
+  --code-bg: #0f172a;
+  --code-border: #263043;
+  --code-text: #e6edf3;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* If user manually picked a theme, don't auto-switch */
+  html:not([data-theme]) {
+  :root {
+    --bg: #0b0f17;
+    --surface: #121826;
+    --text: #e6edf3;
+    --text-strong: #f0f6fc;
+    --muted: #9aa4b2;
+    --border: #263043;
+    --link: #7ab7ff;
+    --link-hover: #a6d2ff;
+    --selection-bg: #22314d;
+    --selection-text: #f0f6fc;
+
+    --code-bg: #0f172a;
+    --code-border: #263043;
+    --code-text: #e6edf3;
+  }
+  }
+}
+
 /**************/
 /* BASE RULES */
 /**************/
@@ -18,9 +89,9 @@ html {
 }
 
 body {
-	background: $white;
+	background: var(--bg);
   font: 18px/1.4 $helvetica;
-  color: $darkGray;
+  color: var(--text);
 }
 
 .container {
@@ -32,7 +103,7 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: $helveticaNeue;
-  color: $darkerGray;
+  color: var(--text-strong);
   font-weight: bold;
 
   line-height: 1.7;
@@ -61,7 +132,7 @@ h3 {
 
 h4 {
   font-size: 18px;
-  color: $gray;
+  color: var(--muted);
 }
 
 p {
@@ -69,11 +140,11 @@ p {
 }
 
 a {
-  color: $blue;
+  color: var(--link);
   text-decoration: none;
 	cursor: pointer;
   &:hover, &:active {
-    color: $blue;
+    color: var(--link-hover);
     text-decoration: underline;
   }
 }
@@ -158,7 +229,7 @@ img {
 
 // Fixes images in popup boxes from Google Translate
 .submission_info {
-  color: $gray;
+  color: var(--muted);
   font-size: 14px;
   @include mobile {
     font-size: 12px;
@@ -205,17 +276,17 @@ img {
 
 .date {
   font-style: italic;
-  color: $gray;
+  color: var(--muted);
 }
 
 // Specify the color of the selection
 ::-moz-selection {
-  color: $black;
-  background: $lightGray;
+  color: var(--selection-text);
+  background: var(--selection-bg);
 }
 ::selection {
-  color: $black;
-  background: $lightGray;
+  color: var(--selection-text);
+  background: var(--selection-bg);
 }
 
 // Nicolas Gallagher's micro clearfix hack
@@ -244,7 +315,7 @@ img {
 
 .masthead {
   padding: 20px 0;
-  border-bottom: 1px solid $lightGray;
+  border-bottom: 1px solid var(--border);
 
   // @include mobile {
   //   text-align: center;
@@ -280,7 +351,7 @@ img {
 
 .site-name {
   margin: 0;
-  color: $darkGray;
+  color: var(--text);
   cursor: pointer;
   font-family: $helveticaNeue;
   font-weight: 300;
@@ -290,7 +361,7 @@ img {
 
 .site-description {
   margin: -5px 0 -5px 0;
-  color: $gray;
+  color: var(--muted);
   font-size: 16px;
   flex: 1;
 
@@ -318,15 +389,39 @@ nav {
 
   a {
     margin-left: 20px;
-    color: $darkGray;
+    color: var(--text);
     text-align: right;
     font-weight: 300;
     letter-spacing: 1px;
 
     @include mobile {
       margin: 0 10px;
-      color: $blue;
+      color: var(--link);
     }
+  }
+}
+
+.theme-toggle {
+  margin-left: 16px;
+  padding: 6px 10px;
+  font-family: $helveticaNeue;
+  font-size: 14px;
+  line-height: 1;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+
+  &:hover, &:active {
+    text-decoration: none;
+    border-color: var(--link);
+  }
+
+  @include mobile {
+    margin-left: 10px;
+    padding: 5px 9px;
+    font-size: 13px;
   }
 }
 
@@ -336,7 +431,7 @@ nav {
 
 .posts > .post {
   padding-bottom: 2em;
-  border-bottom: 1px solid $lightGray;
+  border-bottom: 1px solid var(--border);
 }
 
 .posts > .post:last-child {
@@ -347,9 +442,9 @@ nav {
 .post {
   blockquote {
     margin: 1.8em .8em;
-    border-left: 2px solid $gray;
+    border-left: 2px solid var(--border);
     padding: 0.1em 1em;
-    color: $gray;
+    color: var(--muted);
     font-size: 22px;
     font-style: italic;
   }
@@ -366,9 +461,9 @@ nav {
 
 .wrapper-footer {
   margin-top: 50px;
-  border-top: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
-  background-color: $lightGray;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface);
 }
 
 footer {

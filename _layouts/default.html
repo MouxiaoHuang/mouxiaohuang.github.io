@@ -5,6 +5,17 @@
 
     {% include meta.html %}
 
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("theme"); // "light" | "dark" | null
+          if (t === "light" || t === "dark") {
+            document.documentElement.setAttribute("data-theme", t);
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -43,6 +54,7 @@
             <a href="{{ site.baseurl }}/#Research">Research</a>
             <a href="{{ site.baseurl }}/#Awards">Awards</a>
             <a href="../Resume_Mouxiao_Huang.pdf">CV</a>
+            <button class="theme-toggle" type="button" id="theme-toggle" aria-label="切换主题">主题</button>
           </nav>
         </header>
 
@@ -62,5 +74,69 @@
     </div> -->
 
     {% include analytics.html %}
+
+    <script>
+      (function () {
+        var btn = document.getElementById("theme-toggle");
+        if (!btn) return;
+
+        function currentTheme() {
+          var t = document.documentElement.getAttribute("data-theme");
+          if (t === "light" || t === "dark") return t;
+          return null; // means "system"
+        }
+
+        function systemTheme() {
+          try {
+            return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          } catch (e) {
+            return "light";
+          }
+        }
+
+        function setTheme(t) {
+          if (t === null) {
+            document.documentElement.removeAttribute("data-theme");
+            try { localStorage.removeItem("theme"); } catch (e) {}
+            return;
+          }
+          document.documentElement.setAttribute("data-theme", t);
+          try { localStorage.setItem("theme", t); } catch (e) {}
+        }
+
+        function updateLabel() {
+          var t = currentTheme();
+          var effective = t || systemTheme();
+          btn.textContent = effective === "dark" ? "深色" : "浅色";
+          btn.setAttribute("aria-label", "切换主题（当前：" + (effective === "dark" ? "深色" : "浅色") + "）");
+          btn.title = "点击切换深/浅色（记住你的选择）";
+        }
+
+        btn.addEventListener("click", function () {
+          var t = currentTheme();
+          var effective = t || systemTheme();
+          setTheme(effective === "dark" ? "light" : "dark");
+          updateLabel();
+        });
+
+        // Keep label correct if user hasn't overridden and system theme changes
+        try {
+          var mql = window.matchMedia("(prefers-color-scheme: dark)");
+          if (mql && mql.addEventListener) {
+            mql.addEventListener("change", function () {
+              if (!currentTheme()) updateLabel();
+            });
+          } else if (mql && mql.addListener) {
+            mql.addListener(function () {
+              if (!currentTheme()) updateLabel();
+            });
+          }
+        } catch (e) {}
+
+        updateLabel();
+      })();
+    </script>
   </body>
 </html>
