@@ -7,15 +7,17 @@
 
     <script>
       (function () {
+        // Apply persisted manual theme (if any) before paint.
+        // Only honor stored theme when it was explicitly set by the user.
         try {
           var t = localStorage.getItem("theme"); // "light" | "dark" | null
-          if (t === "light" || t === "dark") {
+          var manual = localStorage.getItem("theme-manual"); // "1" | null
+          if (manual === "1" && (t === "light" || t === "dark")) {
             document.documentElement.setAttribute("data-theme", t);
           }
         } catch (e) {}
       })();
     </script>
-
     <!--[if lt IE 9]>
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -101,11 +103,17 @@
         function setTheme(t) {
           if (t === null) {
             document.documentElement.removeAttribute("data-theme");
-            try { localStorage.removeItem("theme"); } catch (e) {}
+            try {
+              localStorage.removeItem("theme");
+              localStorage.removeItem("theme-manual");
+            } catch (e) {}
             return;
           }
           document.documentElement.setAttribute("data-theme", t);
-          try { localStorage.setItem("theme", t); } catch (e) {}
+          try {
+            localStorage.setItem("theme", t);
+            localStorage.setItem("theme-manual", "1");
+          } catch (e) {}
         }
 
         function updateLabel() {
@@ -116,7 +124,9 @@
             "aria-label",
             "Toggle color theme (current: " + (effective === "dark" ? "dark" : "light") + ")"
           );
-          btn.title = "Click to toggle dark/light theme (saved for next visit)";
+          btn.title = t
+            ? "Click to toggle dark/light theme (saved for next visit)"
+            : "Following system theme — click to override";
         }
 
         btn.addEventListener("click", function () {
