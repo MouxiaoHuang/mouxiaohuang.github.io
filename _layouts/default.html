@@ -7,13 +7,23 @@
 
     <script>
       (function () {
-        // Apply persisted manual theme (if any) before paint.
-        // Only honor stored theme when it was explicitly set by the user.
+        // Apply persisted theme mode (if any) before paint.
         try {
+          var mode = localStorage.getItem("theme-mode"); // "system" | "dark" | "light" | null
+          if (mode === "dark" || mode === "light") {
+            document.documentElement.setAttribute("data-theme", mode);
+            return;
+          }
+          if (mode === "system") {
+            document.documentElement.removeAttribute("data-theme");
+            return;
+          }
+          // Legacy support: older manual toggle stored theme + flag
           var t = localStorage.getItem("theme"); // "light" | "dark" | null
           var manual = localStorage.getItem("theme-manual"); // "1" | null
           if (manual === "1" && (t === "light" || t === "dark")) {
             document.documentElement.setAttribute("data-theme", t);
+            localStorage.setItem("theme-mode", t);
           }
         } catch (e) {}
       })();
@@ -84,12 +94,6 @@
         var btn = document.getElementById("theme-toggle");
         if (!btn) return;
 
-        function currentTheme() {
-          var t = document.documentElement.getAttribute("data-theme");
-          if (t === "light" || t === "dark") return t;
-          return null; // means "system"
-        }
-
         function systemTheme() {
           try {
             return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -100,52 +104,56 @@
           }
         }
 
-        function setTheme(t) {
-          if (t === null) {
+        function getMode() {
+          var mode = null;
+          try { mode = localStorage.getItem("theme-mode"); } catch (e) {}
+          if (mode === "system" || mode === "dark" || mode === "light") return mode;
+          return "system";
+        }
+
+        function setMode(mode) {
+          if (mode === "dark" || mode === "light") {
+            document.documentElement.setAttribute("data-theme", mode);
+          } else {
             document.documentElement.removeAttribute("data-theme");
-            try {
-              localStorage.removeItem("theme");
-              localStorage.removeItem("theme-manual");
-            } catch (e) {}
-            return;
           }
-          document.documentElement.setAttribute("data-theme", t);
           try {
-            localStorage.setItem("theme", t);
-            localStorage.setItem("theme-manual", "1");
+            localStorage.setItem("theme-mode", mode);
+            // Cleanup legacy keys
+            localStorage.removeItem("theme");
+            localStorage.removeItem("theme-manual");
           } catch (e) {}
         }
 
         function updateLabel() {
-          var t = currentTheme();
-          var effective = t || systemTheme();
-          btn.textContent = effective === "dark" ? "🌙" : "☀️";
+          var mode = getMode();
+          var effective = mode === "system" ? systemTheme() : mode;
+          var icon = mode === "system" ? "🖥️" : (mode === "dark" ? "🌙" : "☀️");
+          btn.textContent = icon;
           btn.setAttribute(
             "aria-label",
-            "Toggle color theme (current: " + (effective === "dark" ? "dark" : "light") + ")"
+            "Theme mode: " + mode + " (current: " + effective + ")"
           );
-          btn.title = t
-            ? "Click to toggle dark/light theme (saved for next visit)"
-            : "Following system theme — click to override";
+          btn.title = "Theme: " + mode + " — click to change";
         }
 
         btn.addEventListener("click", function () {
-          var t = currentTheme();
-          var effective = t || systemTheme();
-          setTheme(effective === "dark" ? "light" : "dark");
+          var mode = getMode();
+          var next = mode === "system" ? "dark" : (mode === "dark" ? "light" : "system");
+          setMode(next);
           updateLabel();
         });
 
-        // Keep label correct if user hasn't overridden and system theme changes
+        // Keep label correct when system theme changes
         try {
           var mql = window.matchMedia("(prefers-color-scheme: dark)");
           if (mql && mql.addEventListener) {
             mql.addEventListener("change", function () {
-              if (!currentTheme()) updateLabel();
+              if (getMode() === "system") updateLabel();
             });
           } else if (mql && mql.addListener) {
             mql.addListener(function () {
-              if (!currentTheme()) updateLabel();
+              if (getMode() === "system") updateLabel();
             });
           }
         } catch (e) {}
