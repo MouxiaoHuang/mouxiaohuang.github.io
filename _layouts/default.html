@@ -44,31 +44,24 @@
     <div class="wrapper-masthead">
       <div class="container">
 
-        <header class="masthead clearfix">
-          <!-- <a href="{{ site.baseurl }}/" class="site-avatar"><img src="{{ site.avatar }}" /></a> -->
-
-          <!-- <nav>
-
-           <a href="{{ site.baseurl }}/">Blog</a>
-            <a href="{{ site.baseurl }}/about">About</a>
-
-          </nav> -->
-
-
-          <div class="site-info">
-            <h1 class="site-name"><a href="{{ site.baseurl }}/">{{ site.name }}</a></h1>
-            <p class="site-description">{{ site.description }}</p>
+        <header class="masthead">
+          <div class="masthead-top">
+            <div class="site-info">
+              <h1 class="site-name"><a href="{{ site.baseurl }}/">{{ site.name }}</a></h1>
+              <p class="site-description">{{ site.description }}</p>
+            </div>
           </div>
 
-
-          <nav>
+          <nav class="site-nav" aria-label="Primary">
+            <a href="{{ site.baseurl }}/">Home</a>
             <a href="{{ site.baseurl }}/#Education">Education</a>
             <a href="{{ site.baseurl }}/#Experience">Work</a>
             <a href="{{ site.baseurl }}/#Research">Research</a>
+            <a href="{{ site.baseurl }}/blogs/">Blogs</a>
+            <a href="{{ site.baseurl }}/tools/">Tools</a>
             <a href="{{ site.baseurl }}/#Awards">Awards</a>
             <a href="{{ site.baseurl }}/#Contact">Contact</a>
-            <a href="../Resume_Mouxiao_Huang.pdf">CV</a>
-            <button class="theme-toggle" type="button" id="theme-toggle" aria-label="切换主题">主题</button>
+            <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Theme mode">⚙️</button>
           </nav>
         </header>
 
@@ -78,14 +71,6 @@
     <div id="main" role="main" class="container">
       {{ content }}
     </div>
-
-    <!-- <div class="wrapper-footer">
-      <div class="container">
-        <footer class="footer">
-          {% include svg-icons.html %}
-        </footer>
-      </div>
-    </div> -->
 
     {% include analytics.html %}
 

@@ -314,16 +314,31 @@ img {
 //
 
 .wrapper-masthead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   margin-bottom: 15px;
+  background: var(--bg);
 }
 
 .masthead {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   padding: 20px 0;
   border-bottom: 1px solid var(--border);
 
   @include mobile {
+    gap: 12px;
     padding: 15px 0;
   }
+}
+
+.masthead-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 // .site-avatar {
@@ -344,12 +359,8 @@ img {
 // }
 
 .site-info {
-  float: left;
-
-  @include mobile {
-    float: none;
-    margin-bottom: 12px;
-  }
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .site-name {
@@ -381,35 +392,48 @@ img {
   // }
 }
 
-nav {
-  float: right;
-  margin-top: 23px; // @TODO: Vertically middle align
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 16px;
+  width: 100%;
   font-family: $helveticaNeue;
-  font-size: 18px;
+  font-size: 15px;
+  line-height: 1.4;
 
   @include mobile {
-    float: none;
-    margin-top: 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
     gap: 8px 12px;
-    font-size: 15px;
+    font-size: 14px;
   }
 
   a {
-    margin-left: 20px;
     color: var(--text);
-    text-align: right;
-    font-weight: 300;
-    letter-spacing: 1px;
+    font-weight: 400;
+    letter-spacing: 0.2px;
     white-space: nowrap;
 
     @include mobile {
-      margin: 0;
       color: var(--link);
-      text-align: left;
-      font-size: 15px;
+    }
+  }
+
+  .theme-toggle {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    cursor: pointer;
+    vertical-align: baseline;
+
+    &:hover {
+      color: var(--link);
     }
   }
 }
@@ -467,6 +491,62 @@ html[data-theme="dark"] {
   border-bottom: none;
 }
 
+.blog-intro {
+  margin: 0 0 24px;
+  color: var(--muted);
+}
+
+.blog-list {
+  margin-top: 8px;
+}
+
+.blog-item h2 {
+  margin-bottom: 0;
+  font-size: 22px;
+}
+
+.blog-item .date {
+  margin: 2px 0 12px;
+  font-size: 15px;
+}
+
+.subpage-list {
+  margin-top: 8px;
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+.subpage-list-meta {
+  color: var(--muted);
+}
+
+.post-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 16px;
+}
+
+.page-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: -8px 0 20px;
+  font-size: 16px;
+}
+
 .post {
   blockquote {
     margin: 1.8em .8em;
@@ -487,23 +567,6 @@ html[data-theme="dark"] {
   }
 }
 
-.wrapper-footer {
-  margin-top: 50px;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  background-color: var(--surface);
-}
-
-footer {
-  padding: 20px 0;
-  text-align: center;
-}
-
-
-
-
-
 // Settled on moving the import of syntax highlighting to the bottom of the CSS
 // ... Otherwise it really bloats up the top of the CSS file and makes it difficult to find the start
 @import "highlights";
-@import "svg-icons";
