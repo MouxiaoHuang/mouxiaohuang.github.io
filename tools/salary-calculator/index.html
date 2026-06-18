@@ -1,0 +1,2459 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#f5f7f8">
+  <meta name="format-detection" content="telephone=no">
+  <title>工资计算器</title>
+  <!-- 使用说明：只需将此 index.html 发送到手机，用 Safari/Chrome 打开即可离线计算；联网时会自动拉取最新港币汇率，离线时使用默认 0.86。 -->
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7f8;
+      --surface: #ffffff;
+      --surface-2: #eef3f1;
+      --text: #17211c;
+      --muted: #66736d;
+      --line: #d9e2de;
+      --accent: #16725a;
+      --accent-2: #a4491f;
+      --focus: #0b7fab;
+      --shadow: 0 16px 40px rgba(27, 43, 36, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1480px, 100%);
+      margin: 0 auto;
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .mirror-link {
+      flex: 0 0 auto;
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .mirror-link:hover {
+      border-color: var(--accent);
+    }
+
+    .mirror-link.hidden {
+      display: none;
+    }
+
+    .currency-pill {
+      flex: 0 0 auto;
+      min-width: 72px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 650;
+      box-shadow: 0 4px 14px rgba(27, 43, 36, 0.05);
+    }
+
+    .exchange-rate-note {
+      flex: 1 1 220px;
+      margin: 0;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      min-width: 0;
+    }
+
+    .rate-main {
+      display: block;
+    }
+
+    .rate-source {
+      display: block;
+      margin-top: 2px;
+    }
+
+    .rate-source-short,
+    .btn-text-short,
+    .note-text-short {
+      display: none;
+    }
+
+    .exchange-rate-note strong {
+      color: var(--text);
+      font-weight: 650;
+    }
+
+    .exchange-rate-note.live {
+      border-color: rgba(22, 114, 90, 0.25);
+      background: #eff8f5;
+    }
+
+    .exchange-rate-note.fallback {
+      border-color: rgba(164, 73, 31, 0.2);
+      background: #fff8f3;
+    }
+
+    .rate-refresh {
+      flex: 0 0 auto;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--accent);
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+    }
+
+    .rate-refresh:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 430px) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+      width: 100%;
+    }
+
+    .layout > * {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .controls,
+    .results {
+      width: 100%;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      position: sticky;
+      top: 16px;
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+    }
+
+    .panel-section {
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-section:last-child {
+      border-bottom: 0;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-2);
+    }
+
+    .segmented button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .segmented button[aria-pressed="true"] {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 6px 18px rgba(27, 43, 36, 0.08);
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .wide,
+    .field.wide {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfc;
+      color: var(--text);
+      padding: 8px 10px;
+      outline: none;
+      font-size: 16px;
+    }
+
+    input[type="number"] {
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input:focus,
+    select:focus,
+    button:focus-visible {
+      border-color: var(--focus);
+      box-shadow: 0 0 0 3px rgba(11, 127, 171, 0.15);
+    }
+
+    .rate-table,
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      text-align: right;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+      background: #f9fbfa;
+    }
+
+    .rate-table input {
+      min-height: 34px;
+      padding: 6px 8px;
+      text-align: right;
+    }
+
+    .rate-table th,
+    .rate-table td {
+      padding: 8px;
+    }
+
+    .rate-table .name-col {
+      width: 74px;
+      white-space: normal;
+    }
+
+    .results {
+      display: grid;
+      gap: 16px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .metric {
+      min-height: 96px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfc;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: clamp(20px, 2vw, 28px);
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric.accent {
+      border-color: rgba(22, 114, 90, 0.3);
+      background: #eff8f5;
+    }
+
+    .metric.warm {
+      border-color: rgba(164, 73, 31, 0.25);
+      background: #fff5ef;
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    .panel-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+    }
+
+    .panel-heading h2 {
+      font-size: 17px;
+    }
+
+    .mini-note {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .bonus-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .offer-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfc;
+    }
+
+    .offer-card h3 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: var(--accent);
+    }
+
+    .compare-table {
+      min-width: 520px;
+    }
+
+    .compare-table th,
+    .compare-table td {
+      text-align: right;
+      white-space: normal;
+    }
+
+    .compare-table th:first-child,
+    .compare-table td:first-child {
+      text-align: left;
+    }
+
+    .compare-table .better {
+      color: var(--accent);
+      font-weight: 650;
+    }
+
+    .compare-table .worse {
+      color: var(--accent-2);
+    }
+
+    .compare-table .compare-section td {
+      padding-top: 14px;
+      padding-bottom: 6px;
+      border-bottom: 0;
+      background: #f3f7f5;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .compare-table .compare-section:first-child td {
+      padding-top: 8px;
+    }
+
+    .compare-cards {
+      display: none;
+      padding: 12px;
+      gap: 10px;
+      grid-template-columns: 1fr;
+    }
+
+    .compare-section-block + .compare-section-block {
+      margin-top: 14px;
+    }
+
+    .compare-section-title {
+      margin: 0 0 8px;
+      padding: 0 2px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .compare-metric-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fbfcfc;
+    }
+
+    .compare-metric-card + .compare-metric-card {
+      margin-top: 8px;
+    }
+
+    .compare-metric-label {
+      margin-bottom: 8px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.3;
+    }
+
+    .compare-metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .compare-offer {
+      min-width: 0;
+      padding: 8px;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+
+    .compare-offer.better {
+      border-color: rgba(22, 114, 90, 0.35);
+      background: #eff8f5;
+    }
+
+    .compare-offer.worse {
+      border-color: rgba(164, 73, 31, 0.2);
+      background: #fff8f4;
+    }
+
+    .compare-offer-name {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .compare-offer strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .compare-offer .cny-note {
+      margin-top: 3px;
+      font-size: 10px;
+    }
+
+    .compare-diff {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .compare-diff.diff-pos {
+      color: var(--accent);
+    }
+
+    .compare-diff.diff-neg {
+      color: var(--accent-2);
+    }
+
+    .compare-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .compare-summary-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfc;
+    }
+
+    .compare-summary-card.accent {
+      border-color: rgba(22, 114, 90, 0.3);
+      background: #eff8f5;
+    }
+
+    .compare-summary-card.warm {
+      border-color: rgba(164, 73, 31, 0.25);
+      background: #fff5ef;
+    }
+
+    .compare-summary-card .metric-name {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .compare-summary-card .metric-diff {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .compare-summary-card .metric-diff.pos {
+      color: var(--accent);
+    }
+
+    .compare-summary-card .metric-diff.neg {
+      color: var(--accent-2);
+    }
+
+    .cny-note {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .mode-layout.compare-active {
+      grid-template-columns: minmax(0, 480px) minmax(0, 1fr);
+    }
+
+    @media (max-width: 1024px), (orientation: portrait) and (max-width: 1366px) {
+      .layout,
+      .mode-layout,
+      .mode-layout.compare-active {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        position: static;
+        max-height: none;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .results {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .field-grid,
+      .bonus-row,
+      .compare-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .metric.wide {
+      grid-column: 1 / -1;
+      min-height: 72px;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 100%;
+        padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+      }
+
+      .top-bar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        gap: 6px 8px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .currency-pill {
+        grid-column: 1;
+        grid-row: 1;
+        align-self: center;
+        justify-self: start;
+        min-width: auto;
+        padding: 4px 10px;
+        font-size: 11px;
+      }
+
+      .rate-refresh {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+        min-height: 32px;
+        padding: 4px 10px;
+        font-size: 11px;
+      }
+
+      .exchange-rate-note {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        padding: 5px 8px;
+        font-size: 11px;
+        line-height: 1.35;
+        border-radius: 6px;
+      }
+
+      .rate-main strong {
+        font-size: 12px;
+      }
+
+      .rate-source-full,
+      .btn-text-full,
+      .note-text-full {
+        display: none;
+      }
+
+      .rate-source-short,
+      .btn-text-short,
+      .note-text-short {
+        display: block;
+      }
+
+      .compare-table-wrap {
+        display: none;
+      }
+
+      .panel-section {
+        padding: 12px;
+      }
+
+      .panel-heading {
+        padding: 12px;
+        gap: 6px;
+      }
+
+      .panel-heading h2 {
+        font-size: 15px;
+      }
+
+      .mini-note {
+        text-align: left;
+        width: 100%;
+        font-size: 11px;
+        line-height: 1.4;
+      }
+
+      .metric {
+        min-height: 72px;
+        padding: 10px;
+      }
+
+      .metric strong {
+        font-size: 18px;
+      }
+
+      .metric span {
+        font-size: 12px;
+      }
+
+      .field-grid,
+      .bonus-row,
+      .summary-grid,
+      .compare-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .offer-card {
+        padding: 12px;
+      }
+
+      .compare-cards {
+        display: grid;
+      }
+
+      .compare-summary-grid {
+        grid-template-columns: 1fr;
+        padding: 12px;
+      }
+
+      .compare-metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .compare-offer + .compare-offer {
+        margin-top: 0;
+      }
+
+      .results {
+        min-width: 0;
+      }
+
+      .layout,
+      .mode-layout,
+      .mode-layout.compare-active {
+        grid-template-columns: 1fr;
+      }
+
+      .controls,
+      .results,
+      .panel {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .rate-table,
+      .result-table {
+        min-width: 0;
+        width: 100%;
+        table-layout: fixed;
+      }
+
+      .rate-table {
+        display: block;
+      }
+
+      .rate-table thead {
+        display: none;
+      }
+
+      .rate-table tbody {
+        display: grid;
+        gap: 10px;
+      }
+
+      .rate-table tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfc;
+      }
+
+      .rate-table td {
+        display: grid;
+        gap: 4px;
+        text-align: left;
+        border: 0;
+        padding: 0;
+        white-space: normal;
+        font-size: 12px;
+      }
+
+      .rate-table td::before {
+        color: var(--muted);
+        font-size: 11px;
+        content: attr(data-label);
+      }
+
+      .rate-table td.name-col {
+        grid-column: 1 / -1;
+        font-weight: 650;
+        font-size: 13px;
+      }
+
+      .rate-table td.name-col::before {
+        display: none;
+      }
+
+      .rate-table input {
+        min-height: 36px;
+        padding: 4px 6px;
+        font-size: 14px;
+      }
+
+      .table-wrap {
+        overflow: visible;
+        max-width: 100%;
+      }
+
+      .result-table {
+        table-layout: auto;
+      }
+
+      th,
+      td {
+        padding: 8px 6px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="top-bar">
+      <div class="currency-pill" id="currencyPill">CNY</div>
+      <p class="exchange-rate-note fallback" id="exchangeRateNote">汇率加载中…</p>
+      <a class="mirror-link hidden" id="mirrorLink" href="#" target="_blank" rel="noopener noreferrer"></a>
+      <button type="button" class="rate-refresh" id="refreshRateBtn"><span class="btn-text-full">刷新汇率</span><span class="btn-text-short">刷新</span></button>
+    </div>
+
+    <div class="layout mode-layout" id="modeLayout">
+      <form class="panel controls" id="salaryForm">
+        <section class="panel-section">
+          <div class="section-title">
+            <h2>模式</h2>
+          </div>
+          <div class="segmented" role="group" aria-label="计算模式">
+            <button type="button" data-mode="single" aria-pressed="true">单独计算</button>
+            <button type="button" data-mode="compare" aria-pressed="false">Offer 对比</button>
+          </div>
+        </section>
+
+        <section class="panel-section single-only">
+          <div class="section-title">
+            <h2>地区</h2>
+          </div>
+          <div class="segmented" role="group" aria-label="地区">
+            <button type="button" data-region="shenzhen" aria-pressed="true">深圳</button>
+            <button type="button" data-region="hongkong" aria-pressed="false">香港</button>
+          </div>
+        </section>
+
+        <section class="panel-section compare-only hidden">
+          <div class="section-title">
+            <h2>Offer 对比</h2>
+          </div>
+          <div class="compare-grid">
+            <div class="offer-card">
+              <h3>Offer A</h3>
+              <div class="field-grid">
+                <div class="field wide">
+                  <label for="offerARegion">地区</label>
+                  <select id="offerARegion">
+                    <option value="shenzhen">深圳</option>
+                    <option value="hongkong">香港</option>
+                  </select>
+                </div>
+                <div class="field wide">
+                  <label for="offerAInputCurrency">收入输入币种</label>
+                  <select id="offerAInputCurrency">
+                    <option value="cny" selected>人民币 CNY</option>
+                    <option value="hkd">港币 HKD</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="offerABase">月 base</label>
+                  <input id="offerABase" type="number" min="0" step="100" value="50000">
+                </div>
+                <div class="field">
+                  <label for="offerASubsidy">月其他补贴</label>
+                  <input id="offerASubsidy" type="number" min="0" step="100" value="0">
+                </div>
+                <div class="field">
+                  <label for="offerABonusMode">年终奖</label>
+                  <select id="offerABonusMode">
+                    <option value="months">按月数</option>
+                    <option value="amount">按金额</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="offerABonusMonths">月数</label>
+                  <input id="offerABonusMonths" type="number" min="0" step="0.1" value="3">
+                </div>
+                <div class="field">
+                  <label for="offerABonusAmount">金额</label>
+                  <input id="offerABonusAmount" type="number" min="0" step="100" value="150000">
+                </div>
+                <div class="field">
+                  <label for="offerASigningBonus">签字费</label>
+                  <input id="offerASigningBonus" type="number" min="0" step="1000" value="0">
+                </div>
+                <div class="mini-note wide" id="offerAInputCurrencyNote"></div>
+              </div>
+            </div>
+            <div class="offer-card">
+              <h3>Offer B</h3>
+              <div class="field-grid">
+                <div class="field wide">
+                  <label for="offerBRegion">地区</label>
+                  <select id="offerBRegion">
+                    <option value="shenzhen">深圳</option>
+                    <option value="hongkong" selected>香港</option>
+                  </select>
+                </div>
+                <div class="field wide">
+                  <label for="offerBInputCurrency">收入输入币种</label>
+                  <select id="offerBInputCurrency">
+                    <option value="cny">人民币 CNY</option>
+                    <option value="hkd" selected>港币 HKD</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="offerBBase">月 base</label>
+                  <input id="offerBBase" type="number" min="0" step="100" value="60000">
+                </div>
+                <div class="field">
+                  <label for="offerBSubsidy">月其他补贴</label>
+                  <input id="offerBSubsidy" type="number" min="0" step="100" value="1000">
+                </div>
+                <div class="field">
+                  <label for="offerBBonusMode">年终奖</label>
+                  <select id="offerBBonusMode">
+                    <option value="months">按月数</option>
+                    <option value="amount">按金额</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="offerBBonusMonths">月数</label>
+                  <input id="offerBBonusMonths" type="number" min="0" step="0.1" value="2">
+                </div>
+                <div class="field">
+                  <label for="offerBBonusAmount">金额</label>
+                  <input id="offerBBonusAmount" type="number" min="0" step="100" value="120000">
+                </div>
+                <div class="field">
+                  <label for="offerBSigningBonus">签字费</label>
+                  <input id="offerBSigningBonus" type="number" min="0" step="1000" value="50000">
+                </div>
+                <div class="mini-note wide" id="offerBInputCurrencyNote"></div>
+              </div>
+            </div>
+          </div>
+          <div class="field wide" style="margin-top: 12px;">
+            <label for="hkdToCny">港币兑人民币汇率（可手动微调）</label>
+            <input id="hkdToCny" type="number" min="0" step="0.0001" value="0.86">
+          </div>
+        </section>
+
+        <section class="panel-section single-only">
+          <div class="section-title">
+            <h2>收入</h2>
+          </div>
+          <div class="field-grid">
+            <div class="field wide">
+              <label for="inputCurrency">收入输入币种</label>
+              <select id="inputCurrency" name="inputCurrency">
+                <option value="cny" selected>人民币 CNY</option>
+                <option value="hkd">港币 HKD</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="monthlyBase">月 base</label>
+              <input id="monthlyBase" name="monthlyBase" type="number" min="0" step="100" value="50000">
+            </div>
+            <div class="field">
+              <label for="monthlySubsidy">月其他补贴</label>
+              <input id="monthlySubsidy" name="monthlySubsidy" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field">
+              <label for="bonusMode">年终奖</label>
+              <select id="bonusMode" name="bonusMode">
+                <option value="months">按月数</option>
+                <option value="amount">按金额</option>
+              </select>
+            </div>
+            <div class="bonus-row wide">
+              <div class="field">
+                <label for="bonusMonths">月数</label>
+                <input id="bonusMonths" name="bonusMonths" type="number" min="0" step="0.1" value="3">
+              </div>
+              <div class="field">
+                <label for="bonusAmount">金额</label>
+                <input id="bonusAmount" name="bonusAmount" type="number" min="0" step="100" value="150000">
+              </div>
+            </div>
+            <div class="field wide">
+              <label for="signingBonus">签字费</label>
+              <input id="signingBonus" name="signingBonus" type="number" min="0" step="1000" value="0">
+            </div>
+            <div class="mini-note wide" id="inputCurrencyNote"></div>
+            <div class="field wide hk-exchange-only hidden">
+              <label for="singleHkdToCny">港币兑人民币汇率（可手动微调）</label>
+              <input id="singleHkdToCny" type="number" min="0" step="0.0001" value="0.86">
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-section shenzhen-only">
+          <div class="section-title">
+            <h2>个税</h2>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label for="standardDeduction">月基本减除</label>
+              <input id="standardDeduction" name="standardDeduction" type="number" min="0" step="100" value="5000">
+            </div>
+            <div class="field">
+              <label for="specialDeduction">月专项附加</label>
+              <input id="specialDeduction" name="specialDeduction" type="number" min="0" step="100" value="0">
+            </div>
+            <div class="field wide">
+              <label for="bonusTaxMethod">年终奖计税</label>
+              <select id="bonusTaxMethod" name="bonusTaxMethod">
+                <option value="separate">单独计税</option>
+                <option value="integrated">并入综合所得</option>
+                <option value="best">自动取低</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-section shenzhen-only">
+          <div class="section-title">
+            <h2>深圳五险一金</h2>
+          </div>
+          <div class="table-wrap">
+            <table class="rate-table">
+              <thead>
+                <tr>
+                  <th class="name-col">项目</th>
+                  <th>基数</th>
+                  <th>上限</th>
+                  <th>个人%</th>
+                  <th>公司%</th>
+                </tr>
+              </thead>
+              <tbody id="shenzhenInputs"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel-section hk-only hidden">
+          <div class="section-title">
+            <h2>香港参数</h2>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label for="mpfEmployeeRate">MPF个人%</label>
+              <input id="mpfEmployeeRate" name="mpfEmployeeRate" type="number" min="0" step="0.1" value="5">
+            </div>
+            <div class="field">
+              <label for="mpfEmployerRate">MPF公司%</label>
+              <input id="mpfEmployerRate" name="mpfEmployerRate" type="number" min="0" step="0.1" value="5">
+            </div>
+            <div class="field">
+              <label for="mpfMinIncome">MPF最低月入</label>
+              <input id="mpfMinIncome" name="mpfMinIncome" type="number" min="0" step="100" value="7100">
+            </div>
+            <div class="field">
+              <label for="mpfMonthlyCap">MPF月供款上限</label>
+              <input id="mpfMonthlyCap" name="mpfMonthlyCap" type="number" min="0" step="100" value="1500">
+            </div>
+            <div class="field">
+              <label for="hkBasicAllowance">基本免税额</label>
+              <input id="hkBasicAllowance" name="hkBasicAllowance" type="number" min="0" step="1000" value="132000">
+            </div>
+            <div class="field">
+              <label for="hkTaxReduction">税款宽减</label>
+              <input id="hkTaxReduction" name="hkTaxReduction" type="number" min="0" step="100" value="3000">
+            </div>
+            <div class="field wide">
+              <label for="hkOtherDeductions">其他扣除</label>
+              <input id="hkOtherDeductions" name="hkOtherDeductions" type="number" min="0" step="1000" value="0">
+            </div>
+          </div>
+        </section>
+      </form>
+
+      <section class="results">
+        <section class="panel compare-only hidden" id="comparePanel">
+          <div class="panel-heading">
+            <h2>Offer 对比</h2>
+            <div class="mini-note" id="compareNote">统一换算为 CNY 以便跨地区比较</div>
+          </div>
+          <div class="compare-summary-grid" id="compareSummaryGrid"></div>
+          <div class="table-wrap compare-table-wrap">
+            <table class="result-table compare-table">
+              <thead>
+                <tr>
+                  <th>指标</th>
+                  <th id="compareHeaderA">Offer A</th>
+                  <th id="compareHeaderB">Offer B</th>
+                  <th>差额 (B-A)</th>
+                </tr>
+              </thead>
+              <tbody id="compareRows"></tbody>
+            </table>
+          </div>
+          <div class="compare-cards" id="compareCards"></div>
+        </section>
+
+        <section class="panel single-only">
+          <div class="summary-grid" id="summaryGrid"></div>
+        </section>
+
+        <section class="panel single-only">
+          <div class="panel-heading">
+            <h2>每月明细</h2>
+            <div class="mini-note" id="monthlyNote"></div>
+          </div>
+          <div class="table-wrap">
+            <table class="result-table">
+              <thead>
+                <tr>
+                  <th>月份</th>
+                  <th>税前</th>
+                  <th>个人缴纳</th>
+                  <th>应税/计税收入</th>
+                  <th>个税预估</th>
+                  <th>到手现金</th>
+                </tr>
+              </thead>
+              <tbody id="monthlyRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel single-only">
+          <div class="panel-heading">
+            <h2>缴纳明细</h2>
+            <div class="mini-note" id="bonusNote"></div>
+          </div>
+          <div class="table-wrap">
+            <table class="result-table">
+              <thead>
+                <tr>
+                  <th>项目</th>
+                  <th>基数</th>
+                  <th>个人比例</th>
+                  <th>个人月缴</th>
+                  <th>公司比例</th>
+                  <th>公司月缴</th>
+                </tr>
+              </thead>
+              <tbody id="contributionRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const cnAnnualTaxBrackets = [
+      [36000, 0.03, 0],
+      [144000, 0.10, 2520],
+      [300000, 0.20, 16920],
+      [420000, 0.25, 31920],
+      [660000, 0.30, 52920],
+      [960000, 0.35, 85920],
+      [Infinity, 0.45, 181920],
+    ];
+
+    const cnMonthlyBonusBrackets = [
+      [3000, 0.03, 0],
+      [12000, 0.10, 210],
+      [25000, 0.20, 1410],
+      [35000, 0.25, 2660],
+      [55000, 0.30, 4410],
+      [80000, 0.35, 7160],
+      [Infinity, 0.45, 15160],
+    ];
+
+    const hkProgressiveBrackets = [
+      [50000, 0.02],
+      [50000, 0.06],
+      [50000, 0.10],
+      [50000, 0.14],
+      [Infinity, 0.17],
+    ];
+
+    const contributionItems = [
+      ["pension", "养老保险", 8, 16, 27549],
+      ["medical", "医疗保险", 2, 5, 33633],
+      ["unemployment", "失业保险", 0.2, 0.8, 44265],
+      ["injury", "工伤保险", 0, 0.2, null],
+      ["maternity", "生育保险", 0, 0.5, 33633],
+      ["housing", "住房公积金", 7, 7, 44265],
+    ];
+
+    const state = {
+      region: "shenzhen",
+      mode: "single",
+    };
+
+    const DEFAULT_HKD_TO_CNY = 0.86;
+    const EXCHANGE_CACHE_KEY = "salary_calc_hkd_cny_cache";
+    const EXCHANGE_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+    // 站点链接：china 填国内正式地址（含子路径，末尾保留 /）
+    const APP_LINKS = {
+      international: "https://salary-calculator-coral-five.vercel.app/",
+      china: "https://mouxiaohuang.com/tools/salary-calculator/",
+    };
+
+    const EXCHANGE_SOURCE_SERVER = {
+      name: "服务端",
+      parseRate: (data) => data?.rate,
+      parseDate: (data) => data?.quoteDate || null,
+      parseSource: (data) => data?.source || null,
+      requireLive: true,
+    };
+    const REGION_LABELS = {
+      shenzhen: "深圳",
+      hongkong: "香港",
+    };
+
+    const exchangeRateState = {
+      value: DEFAULT_HKD_TO_CNY,
+      source: "本地默认值",
+      quoteDate: null,
+      fetchedAt: null,
+      isLive: false,
+      isManual: false,
+    };
+
+    const EXCHANGE_SOURCES = [
+      {
+        name: "服务端",
+        url: "/api/hkd-cny",
+        parseRate: (data) => data?.rate,
+        parseDate: (data) => data?.quoteDate || null,
+        parseSource: (data) => data?.source || null,
+        requireLive: true,
+      },
+      {
+        name: "Frankfurter（欧洲央行参考汇率）",
+        url: "https://api.frankfurter.app/latest?from=HKD&to=CNY",
+        parseRate: (data) => data?.rates?.CNY,
+        parseDate: (data) => data?.date || null,
+      },
+      {
+        name: "open.er-api.com",
+        url: "https://open.er-api.com/v6/latest/HKD",
+        parseRate: (data) => data?.rates?.CNY,
+        parseDate: (data) => (data?.time_last_update_utc || "").slice(0, 10) || null,
+      },
+    ];
+
+    const form = document.querySelector("#salaryForm");
+    const shenzhenInputs = document.querySelector("#shenzhenInputs");
+    const summaryGrid = document.querySelector("#summaryGrid");
+    const monthlyRows = document.querySelector("#monthlyRows");
+    const contributionRows = document.querySelector("#contributionRows");
+    const currencyPill = document.querySelector("#currencyPill");
+    const monthlyNote = document.querySelector("#monthlyNote");
+    const compareRows = document.querySelector("#compareRows");
+    const compareCards = document.querySelector("#compareCards");
+    const compareSummaryGrid = document.querySelector("#compareSummaryGrid");
+    const comparePanel = document.querySelector("#comparePanel");
+    const modeLayout = document.querySelector("#modeLayout");
+    const bonusNote = document.querySelector("#bonusNote");
+    const exchangeRateNote = document.querySelector("#exchangeRateNote");
+    const hkdToCnyInput = document.querySelector("#hkdToCny");
+    const singleHkdToCnyInput = document.querySelector("#singleHkdToCny");
+    const refreshRateBtn = document.querySelector("#refreshRateBtn");
+    const mirrorLink = document.querySelector("#mirrorLink");
+
+    function isChinaMirrorSite() {
+      const host = location.hostname.toLowerCase();
+      if (host === "mouxiaohuang.com" || host === "www.mouxiaohuang.com") {
+        return true;
+      }
+      return host.endsWith(".tcloudbaseapp.com")
+        || host.endsWith(".tcloudbase.com")
+        || host.endsWith(".cloudbase.net")
+        || host.endsWith(".coding-pages.com");
+    }
+
+    function hasServerExchangeApi() {
+      const host = location.hostname.toLowerCase();
+      return host === "localhost"
+        || host === "127.0.0.1"
+        || host.endsWith(".vercel.app");
+    }
+
+    function getExchangeSources() {
+      const publicSources = EXCHANGE_SOURCES.filter((source) => source.url !== "/api/hkd-cny");
+      if (hasServerExchangeApi()) {
+        return [{ ...EXCHANGE_SOURCE_SERVER, url: "/api/hkd-cny" }, ...publicSources];
+      }
+      const intlBase = APP_LINKS.international?.replace(/\/$/, "");
+      if (intlBase) {
+        return [{ ...EXCHANGE_SOURCE_SERVER, url: `${intlBase}/api/hkd-cny` }, ...publicSources];
+      }
+      return publicSources;
+    }
+
+    function updateMirrorLink() {
+      if (!mirrorLink) return;
+      const host = location.hostname.toLowerCase();
+      const onChina = isChinaMirrorSite();
+      const onIntl = host.endsWith(".vercel.app");
+      if (onChina && APP_LINKS.international) {
+        mirrorLink.textContent = "国际站";
+        mirrorLink.href = APP_LINKS.international;
+        mirrorLink.classList.remove("hidden");
+        return;
+      }
+      if (onIntl && APP_LINKS.china) {
+        mirrorLink.textContent = "国内镜像";
+        mirrorLink.href = APP_LINKS.china;
+        mirrorLink.classList.remove("hidden");
+        return;
+      }
+      mirrorLink.classList.add("hidden");
+    }
+
+    function formatRate(value) {
+      return Number(Number(value).toFixed(4)).toString();
+    }
+
+    function syncRateInputs(value) {
+      const text = formatRate(value);
+      if (hkdToCnyInput) hkdToCnyInput.value = text;
+      if (singleHkdToCnyInput) singleHkdToCnyInput.value = text;
+    }
+
+    function readCachedExchangeRate() {
+      try {
+        const raw = localStorage.getItem(EXCHANGE_CACHE_KEY);
+        if (!raw) return null;
+        const cached = JSON.parse(raw);
+        if (!cached?.rate || cached.rate <= 0) return null;
+        if (Date.now() - cached.fetchedAt > EXCHANGE_CACHE_MAX_AGE_MS) return null;
+        return cached;
+      } catch {
+        return null;
+      }
+    }
+
+    function writeCachedExchangeRate(rate, source, quoteDate) {
+      try {
+        localStorage.setItem(EXCHANGE_CACHE_KEY, JSON.stringify({
+          rate,
+          source,
+          quoteDate,
+          fetchedAt: Date.now(),
+        }));
+      } catch {
+        // localStorage may be unavailable in some private modes
+      }
+    }
+
+    function applyExchangeRate(rate, source, quoteDate, options = {}) {
+      exchangeRateState.value = rate;
+      exchangeRateState.source = source;
+      exchangeRateState.quoteDate = quoteDate;
+      exchangeRateState.fetchedAt = options.fetchedAt || Date.now();
+      exchangeRateState.isLive = Boolean(options.isLive);
+      exchangeRateState.isManual = Boolean(options.isManual);
+      if (!options.isManual) {
+        syncRateInputs(rate);
+      }
+      updateExchangeRateNote();
+      render();
+    }
+
+    function exchangeRateSourceText() {
+      if (exchangeRateState.isManual) {
+        return { full: "来源：手动输入", short: "手动输入" };
+      }
+      if (exchangeRateState.isLive) {
+        const full = exchangeRateState.quoteDate
+          ? `来源：${exchangeRateState.source}，报价日 ${exchangeRateState.quoteDate}`
+          : `来源：${exchangeRateState.source}`;
+        const shortSource = exchangeRateState.source.includes("Frankfurter")
+          ? "Frankfurter 实时"
+          : exchangeRateState.source;
+        const short = exchangeRateState.quoteDate
+          ? `${shortSource} · ${exchangeRateState.quoteDate}`
+          : shortSource;
+        return { full: full.replace(/^来源：/, "来源："), short };
+      }
+      if (exchangeRateState.source.includes("缓存")) {
+        const full = exchangeRateState.quoteDate
+          ? `来源：${exchangeRateState.source}，报价日 ${exchangeRateState.quoteDate}`
+          : `来源：${exchangeRateState.source}`;
+        return { full, short: "本地缓存" };
+      }
+      if (isLocalFileMode()) {
+        return {
+          full: "来源：本地默认值（直接打开 HTML 文件，浏览器禁止拉取汇率）",
+          short: "本地文件 · 默认",
+        };
+      }
+      return {
+        full: "来源：本地默认值（汇率接口暂时不可用，请用 python3 serve.py 启动后访问）",
+        short: "默认 0.86",
+      };
+    }
+
+    function isLocalFileMode() {
+      return window.location.protocol === "file:";
+    }
+
+    function updateExchangeRateNote() {
+      if (!exchangeRateNote) return;
+      const rateText = formatRate(getHkdToCny());
+      const { full, short } = exchangeRateSourceText();
+
+      exchangeRateNote.className = `exchange-rate-note ${exchangeRateState.isLive ? "live" : "fallback"}`;
+      exchangeRateNote.innerHTML = `
+        <span class="rate-main"><strong>1 HKD = ${rateText} CNY</strong></span>
+        <span class="rate-source rate-source-full">${full}</span>
+        <span class="rate-source rate-source-short">${short}</span>
+      `;
+    }
+
+    async function fetchLiveExchangeRate() {
+      for (const source of getExchangeSources()) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 5000);
+          const response = await fetch(source.url, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!response.ok) continue;
+          const data = await response.json();
+          const rate = Number(source.parseRate(data));
+          if (!Number.isFinite(rate) || rate <= 0) continue;
+          if (source.requireLive && data?.live !== true) continue;
+          const quoteDate = source.parseDate(data);
+          const sourceName = source.parseSource?.(data) || source.name;
+          writeCachedExchangeRate(rate, sourceName, quoteDate);
+          applyExchangeRate(rate, sourceName, quoteDate, { isLive: true });
+          return true;
+        } catch {
+          // try next source
+        }
+      }
+      return false;
+    }
+
+    async function initExchangeRate(options = {}) {
+      if (refreshRateBtn) refreshRateBtn.disabled = true;
+      if (!options.skipDefault) {
+        applyExchangeRate(DEFAULT_HKD_TO_CNY, "本地默认值", null, { isLive: false });
+      }
+      const live = await fetchLiveExchangeRate();
+      if (live) {
+        if (refreshRateBtn) refreshRateBtn.disabled = false;
+        return;
+      }
+      if (!options.skipDefault) {
+        const cached = readCachedExchangeRate();
+        if (cached) {
+          applyExchangeRate(cached.rate, `${cached.source}（本地缓存）`, cached.quoteDate, { isLive: false });
+          if (refreshRateBtn) refreshRateBtn.disabled = false;
+          return;
+        }
+        applyExchangeRate(DEFAULT_HKD_TO_CNY, "本地默认值", null, { isLive: false });
+      } else {
+        updateExchangeRateNote();
+      }
+      if (refreshRateBtn) refreshRateBtn.disabled = false;
+    }
+
+    function bindRateInput(input) {
+      if (!input) return;
+      input.addEventListener("input", () => {
+        const value = Number(input.value);
+        if (!Number.isFinite(value) || value <= 0) return;
+        syncRateInputs(value);
+        applyExchangeRate(value, "手动输入", null, { isManual: true, isLive: false });
+      });
+    }
+
+    function getHkdToCny() {
+      const input = state.mode === "compare" ? hkdToCnyInput : singleHkdToCnyInput;
+      const value = Number(input?.value);
+      return Number.isFinite(value) && value > 0 ? value : exchangeRateState.value || DEFAULT_HKD_TO_CNY;
+    }
+
+    function regionNativeCurrency(region) {
+      return region === "hongkong" ? "hkd" : "cny";
+    }
+
+    function currencyTag(code) {
+      return code === "hkd" ? "HKD" : "CNY";
+    }
+
+    function getInputCurrency(prefix = "") {
+      const id = prefix ? `${prefix}InputCurrency` : "inputCurrency";
+      const select = document.querySelector(`#${id}`);
+      return select?.value || regionNativeCurrency(prefix ? document.querySelector(`#${prefix}Region`)?.value : state.region);
+    }
+
+    function convertToNativeCurrency(amount, inputCurrency, region, hkdToCny) {
+      const native = regionNativeCurrency(region);
+      if (inputCurrency === native) return amount;
+      if (inputCurrency === "cny" && native === "hkd") return amount / hkdToCny;
+      if (inputCurrency === "hkd" && native === "cny") return amount * hkdToCny;
+      return amount;
+    }
+
+    function readIncomeAmounts(prefix, region) {
+      const hkdToCny = getHkdToCny();
+      const inputCurrency = getInputCurrency(prefix);
+      const toNative = (value) => convertToNativeCurrency(value, inputCurrency, region, hkdToCny);
+      const baseId = prefix ? `${prefix}Base` : "monthlyBase";
+      const subsidyId = prefix ? `${prefix}Subsidy` : "monthlySubsidy";
+      const modeId = prefix ? `${prefix}BonusMode` : "bonusMode";
+      const monthsId = prefix ? `${prefix}BonusMonths` : "bonusMonths";
+      const amountId = prefix ? `${prefix}BonusAmount` : "bonusAmount";
+      const monthlyBase = toNative(numberValue(baseId));
+      const monthlySubsidy = toNative(numberValue(subsidyId));
+      const signingBonus = toNative(getSigningBonus(prefix));
+      const mode = document.querySelector(`#${modeId}`).value;
+      const bonus = mode === "months"
+        ? monthlyBase * numberValue(monthsId)
+        : toNative(numberValue(amountId));
+      return { monthlyBase, monthlySubsidy, bonus, signingBonus, inputCurrency };
+    }
+
+    function updateIncomeFieldLabels(prefix = "") {
+      const tag = currencyTag(getInputCurrency(prefix));
+      const fields = prefix
+        ? [
+            [`${prefix}Base`, "月 base"],
+            [`${prefix}Subsidy`, "月其他补贴"],
+            [`${prefix}BonusAmount`, "年终奖金额"],
+            [`${prefix}SigningBonus`, "签字费"],
+          ]
+        : [
+            ["monthlyBase", "月 base"],
+            ["monthlySubsidy", "月其他补贴"],
+            ["bonusAmount", "金额"],
+            ["signingBonus", "签字费"],
+          ];
+      fields.forEach(([id, text]) => {
+        const label = document.querySelector(`label[for="${id}"]`);
+        if (label) label.textContent = `${text} (${tag})`;
+      });
+    }
+
+    function updateInputCurrencyNote(prefix, region) {
+      const noteId = prefix ? `${prefix}InputCurrencyNote` : "inputCurrencyNote";
+      const note = document.querySelector(`#${noteId}`);
+      if (!note) return;
+      const inputCurrency = getInputCurrency(prefix);
+      const native = regionNativeCurrency(region);
+      const inputTag = currencyTag(inputCurrency);
+      const nativeTag = currencyTag(native);
+      if (inputCurrency === native) {
+        note.textContent = `收入数字以 ${inputTag} 填写，与${REGION_LABELS[region]}计税币种一致`;
+        return;
+      }
+      note.textContent = `收入以 ${inputTag} 填写，将按 1 HKD = ${formatRate(getHkdToCny())} CNY 换算为 ${nativeTag} 后计算`;
+    }
+
+    function needsExchangeRateForSingle() {
+      const native = regionNativeCurrency(state.region);
+      return state.region === "hongkong" || getInputCurrency("") !== native;
+    }
+
+    function syncDefaultInputCurrency(prefix, region) {
+      const id = prefix ? `${prefix}InputCurrency` : "inputCurrency";
+      const select = document.querySelector(`#${id}`);
+      if (select) select.value = regionNativeCurrency(region);
+    }
+
+    function moneyForRegion(value, region) {
+      const currency = region === "hongkong" ? "HKD" : "CNY";
+      return new Intl.NumberFormat("zh-CN", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 0,
+      }).format(value || 0);
+    }
+
+    function cnyMoney(value) {
+      return new Intl.NumberFormat("zh-CN", {
+        style: "currency",
+        currency: "CNY",
+        maximumFractionDigits: 0,
+      }).format(value || 0);
+    }
+
+    function initContributionInputs() {
+      shenzhenInputs.innerHTML = contributionItems.map(([key, name, employee, employer, cap]) => `
+        <tr>
+          <td class="name-col">${name}</td>
+          <td data-label="基数"><input data-contribution="${key}" data-field="base" type="number" min="0" step="100" value="" placeholder="默认月base"></td>
+          <td data-label="上限">${cap ? plainMoney(cap) : "无固定"}</td>
+          <td data-label="个人%"><input data-contribution="${key}" data-field="employeeRate" type="number" min="0" step="0.1" value="${employee}"></td>
+          <td data-label="公司%"><input data-contribution="${key}" data-field="employerRate" type="number" min="0" step="0.1" value="${employer}"></td>
+        </tr>
+      `).join("");
+    }
+
+    function numberValue(id) {
+      const value = Number(document.querySelector(`#${id}`).value);
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function money(value, region = state.region) {
+      return moneyForRegion(value, region);
+    }
+
+    function getBonusFromInputs(prefix, monthlyBase) {
+      const modeId = prefix ? `${prefix}BonusMode` : "bonusMode";
+      const monthsId = prefix ? `${prefix}BonusMonths` : "bonusMonths";
+      const amountId = prefix ? `${prefix}BonusAmount` : "bonusAmount";
+      const mode = document.querySelector(`#${modeId}`).value;
+      if (mode === "months") {
+        return numberValue(monthsId) * monthlyBase;
+      }
+      return numberValue(amountId);
+    }
+
+    function getBonus(monthlyBase) {
+      return getBonusFromInputs("", monthlyBase);
+    }
+
+    function syncOfferBonusInputs(prefix) {
+      const modeId = prefix ? `${prefix}BonusMode` : "bonusMode";
+      const baseId = prefix ? `${prefix}Base` : "monthlyBase";
+      const amountId = prefix ? `${prefix}BonusAmount` : "bonusAmount";
+      const monthsId = prefix ? `${prefix}BonusMonths` : "bonusMonths";
+      const mode = document.querySelector(`#${modeId}`).value;
+      const monthlyBase = numberValue(baseId);
+      const amountInput = document.querySelector(`#${amountId}`);
+      const monthsInput = document.querySelector(`#${monthsId}`);
+      if (mode === "months") {
+        amountInput.value = Math.round(numberValue(monthsId) * monthlyBase);
+        amountInput.disabled = true;
+        monthsInput.disabled = false;
+      } else {
+        const months = monthlyBase > 0 ? numberValue(amountId) / monthlyBase : 0;
+        monthsInput.value = Number.isFinite(months) ? months.toFixed(2) : "0";
+        monthsInput.disabled = true;
+        amountInput.disabled = false;
+      }
+    }
+
+    function taxWithQuickDeduction(taxable, brackets) {
+      const amount = Math.max(0, taxable);
+      for (const [upper, rate, quickDeduction] of brackets) {
+        if (amount <= upper) {
+          return Math.max(0, amount * rate - quickDeduction);
+        }
+      }
+      return 0;
+    }
+
+    function taxBySegments(taxable, brackets) {
+      let remaining = Math.max(0, taxable);
+      let tax = 0;
+      for (const [size, rate] of brackets) {
+        const amount = Math.min(remaining, size);
+        tax += amount * rate;
+        remaining -= amount;
+        if (remaining <= 0) break;
+      }
+      return Math.max(0, tax);
+    }
+
+    function bonusBracket(bonus) {
+      const monthlyEquivalent = Math.max(0, bonus / 12);
+      return cnMonthlyBonusBrackets.find(([upper]) => monthlyEquivalent <= upper);
+    }
+
+    function separateLumpSumTax(amount) {
+      const [, rate, quickDeduction] = bonusBracket(amount);
+      return Math.max(0, amount * rate - quickDeduction);
+    }
+
+    function cnLumpSumTaxes(annualSalaryTaxable, salaryTax, bonus, signingBonus, bonusTaxMethod) {
+      const lumpTotal = bonus + signingBonus;
+      const separateBonusTax = separateLumpSumTax(bonus);
+      const separateSigningTax = separateLumpSumTax(signingBonus);
+      const separateTotal = separateBonusTax + separateSigningTax;
+
+      const integratedTax = taxWithQuickDeduction(annualSalaryTaxable + lumpTotal, cnAnnualTaxBrackets);
+      const integratedLumpTax = Math.max(0, integratedTax - salaryTax);
+
+      let lumpTax;
+      if (bonusTaxMethod === "integrated") {
+        lumpTax = integratedLumpTax;
+      } else if (bonusTaxMethod === "best") {
+        lumpTax = Math.min(separateTotal, integratedLumpTax);
+      } else {
+        lumpTax = separateTotal;
+      }
+
+      if (lumpTotal <= 0) {
+        return [0, 0];
+      }
+      if (Math.abs(lumpTax - separateTotal) < 0.01) {
+        return [separateBonusTax, separateSigningTax];
+      }
+      const bonusTax = lumpTax * bonus / lumpTotal;
+      const signingTax = lumpTax * signingBonus / lumpTotal;
+      return [bonusTax, signingTax];
+    }
+
+    function getSigningBonus(prefix) {
+      const id = prefix ? `${prefix}SigningBonus` : "signingBonus";
+      return numberValue(id);
+    }
+
+    function plainMoney(value) {
+      return new Intl.NumberFormat("zh-CN", {
+        maximumFractionDigits: 2,
+        minimumFractionDigits: 2,
+      }).format(value || 0);
+    }
+
+    function percent(value) {
+      return `${(value * 100).toFixed(2)}%`;
+    }
+
+    function readShenzhenContributions(monthlyBase) {
+      return contributionItems.map(([key, name, , , cap]) => {
+        const baseInput = document.querySelector(`[data-contribution="${key}"][data-field="base"]`);
+        const employeeInput = document.querySelector(`[data-contribution="${key}"][data-field="employeeRate"]`);
+        const employerInput = document.querySelector(`[data-contribution="${key}"][data-field="employerRate"]`);
+        const requestedBase = Number(baseInput.value) > 0 ? Number(baseInput.value) : monthlyBase;
+        const base = cap ? Math.min(requestedBase, cap) : requestedBase;
+        const employeeRate = (Number(employeeInput.value) || 0) / 100;
+        const employerRate = (Number(employerInput.value) || 0) / 100;
+        return {
+          name,
+          base,
+          cap,
+          requestedBase,
+          employeeRate,
+          employerRate,
+          employeeAmount: base * employeeRate,
+          employerAmount: base * employerRate,
+        };
+      });
+    }
+
+    function calculateShenzhenFor(monthlyBase, monthlySubsidy, bonus, signingBonus = 0, region = "shenzhen") {
+      const monthlyGross = monthlyBase + monthlySubsidy;
+      const contributions = readShenzhenContributions(monthlyBase);
+      const monthlyEmployeeContribution = contributions.reduce((sum, item) => sum + item.employeeAmount, 0);
+      const standardDeduction = numberValue("standardDeduction");
+      const specialDeduction = numberValue("specialDeduction");
+      const bonusTaxMethod = document.querySelector("#bonusTaxMethod").value;
+      const monthly = [];
+      let paidTax = 0;
+
+      for (let month = 1; month <= 12; month += 1) {
+        const cumulativeTaxable = monthlyGross * month
+          - monthlyEmployeeContribution * month
+          - standardDeduction * month
+          - specialDeduction * month;
+        const cumulativeTax = taxWithQuickDeduction(cumulativeTaxable, cnAnnualTaxBrackets);
+        const monthTax = Math.max(0, cumulativeTax - paidTax);
+        paidTax += monthTax;
+        const taxableIncome = Math.max(0, monthlyGross - monthlyEmployeeContribution - standardDeduction - specialDeduction);
+        monthly.push({
+          month,
+          gross: monthlyGross,
+          employeeContrib: monthlyEmployeeContribution,
+          taxableIncome,
+          tax: monthTax,
+          netCash: monthlyGross - monthlyEmployeeContribution - monthTax,
+        });
+      }
+
+      const salaryTax = paidTax;
+      const annualSalaryTaxable = monthlyGross * 12
+        - monthlyEmployeeContribution * 12
+        - standardDeduction * 12
+        - specialDeduction * 12;
+      const [bonusTax, signingTax] = cnLumpSumTaxes(
+        annualSalaryTaxable,
+        salaryTax,
+        bonus,
+        signingBonus,
+        bonusTaxMethod,
+      );
+
+      const annualSubsidy = monthlySubsidy * 12;
+      const annualGross = monthlyBase * 12 + annualSubsidy + bonus + signingBonus;
+      const annualTax = salaryTax + bonusTax + signingTax;
+      const employeeContribTotal = monthlyEmployeeContribution * 12;
+      const employerContribTotal = contributions.reduce((sum, item) => sum + item.employerAmount, 0) * 12;
+      const annualNetCash = monthly.reduce((sum, item) => sum + item.netCash, 0)
+        + bonus - bonusTax
+        + signingBonus - signingTax;
+      return {
+        region,
+        monthly,
+        contributions,
+        bonusGross: bonus,
+        bonusTax,
+        bonusNet: bonus - bonusTax,
+        signingBonusGross: signingBonus,
+        signingBonusTax: signingTax,
+        signingBonusNet: signingBonus - signingTax,
+        annualGross,
+        annualNetCash,
+        annualTax,
+        employeeContribTotal,
+        employerContribTotal,
+        monthlyBase,
+        monthlySubsidy,
+        annualSubsidy,
+      };
+    }
+
+    function calculateShenzhen() {
+      const income = readIncomeAmounts("", state.region);
+      return calculateShenzhenFor(
+        income.monthlyBase,
+        income.monthlySubsidy,
+        income.bonus,
+        income.signingBonus,
+      );
+    }
+
+    function calculateHongKongFor(monthlyBase, monthlySubsidy, bonus, signingBonus = 0, region = "hongkong") {
+      const monthlyGross = monthlyBase + monthlySubsidy;
+      const mpfEmployeeRate = numberValue("mpfEmployeeRate") / 100;
+      const mpfEmployerRate = numberValue("mpfEmployerRate") / 100;
+      const mpfMinIncome = numberValue("mpfMinIncome");
+      const mpfMonthlyCap = numberValue("mpfMonthlyCap");
+      const mpfEmployee = monthlyBase < mpfMinIncome ? 0 : Math.min(monthlyBase * mpfEmployeeRate, mpfMonthlyCap);
+      const mpfEmployer = Math.min(monthlyBase * mpfEmployerRate, mpfMonthlyCap);
+      const annualSubsidy = monthlySubsidy * 12;
+      const annualIncome = monthlyBase * 12 + annualSubsidy + bonus + signingBonus;
+      const annualMpfEmployee = mpfEmployee * 12;
+      const netIncomeForStandardRate = Math.max(0, annualIncome - annualMpfEmployee);
+      const netChargeableIncome = Math.max(
+        0,
+        annualIncome - annualMpfEmployee - numberValue("hkBasicAllowance") - numberValue("hkOtherDeductions"),
+      );
+      const progressiveTax = taxBySegments(netChargeableIncome, hkProgressiveBrackets);
+      const standardTax = Math.min(netIncomeForStandardRate, 5000000) * 0.15
+        + Math.max(0, netIncomeForStandardRate - 5000000) * 0.16;
+      const annualTax = Math.max(0, Math.min(progressiveTax, standardTax) - numberValue("hkTaxReduction"));
+      const monthlyTaxReserve = annualTax / 12;
+      const monthly = Array.from({ length: 12 }, (_, index) => ({
+        month: index + 1,
+        gross: monthlyGross,
+        employeeContrib: mpfEmployee,
+        taxableIncome: Math.max(0, monthlyGross - mpfEmployee),
+        tax: monthlyTaxReserve,
+        netCash: monthlyGross - mpfEmployee - monthlyTaxReserve,
+      }));
+      const contribution = {
+        name: "强积金 MPF",
+        base: monthlyBase,
+        employeeRate: mpfEmployeeRate,
+        employerRate: mpfEmployerRate,
+        employeeAmount: mpfEmployee,
+        employerAmount: mpfEmployer,
+      };
+      return {
+        region,
+        monthly,
+        contributions: [contribution],
+        bonusGross: bonus,
+        bonusTax: 0,
+        bonusNet: bonus,
+        signingBonusGross: signingBonus,
+        signingBonusTax: 0,
+        signingBonusNet: signingBonus,
+        annualGross: annualIncome,
+        annualNetCash: monthly.reduce((sum, item) => sum + item.netCash, 0) + bonus + signingBonus,
+        annualTax,
+        employeeContribTotal: annualMpfEmployee,
+        employerContribTotal: mpfEmployer * 12,
+        monthlyBase,
+        monthlySubsidy,
+        annualSubsidy,
+      };
+    }
+
+    function calculateHongKong() {
+      const income = readIncomeAmounts("", state.region);
+      return calculateHongKongFor(
+        income.monthlyBase,
+        income.monthlySubsidy,
+        income.bonus,
+        income.signingBonus,
+      );
+    }
+
+    function calculateForRegion(region, monthlyBase, monthlySubsidy, bonus, signingBonus = 0) {
+      if (region === "hongkong") {
+        return calculateHongKongFor(monthlyBase, monthlySubsidy, bonus, signingBonus, region);
+      }
+      return calculateShenzhenFor(monthlyBase, monthlySubsidy, bonus, signingBonus, region);
+    }
+
+    function housingFundBreakdown(result) {
+      const housing = result.contributions.find((item) => item.name.includes("公积金") || item.name.includes("MPF"));
+      if (!housing) {
+        return { employee: 0, employer: 0, total: 0, label: result.region === "hongkong" ? "MPF" : "公积金" };
+      }
+      const employee = housing.employeeAmount * 12;
+      const employer = housing.employerAmount * 12;
+      return {
+        employee,
+        employer,
+        total: employee + employer,
+        label: housing.name.includes("MPF") ? "MPF" : "公积金",
+      };
+    }
+
+    function housingAccountTotal(result) {
+      return housingFundBreakdown(result).total;
+    }
+
+    function employerContributionBreakdown(result) {
+      return result.contributions.map((item) => ({
+        name: item.name,
+        annual: item.employerAmount * 12,
+      }));
+    }
+
+    function employeeContributionBreakdown(result) {
+      return result.contributions.map((item) => ({
+        name: item.name,
+        annual: item.employeeAmount * 12,
+      }));
+    }
+
+    const SUMMARY_METRIC_SPECS = [
+      { key: "annualGross", label: "年综合税前", tone: "accent", higherIsBetter: true },
+      { key: "annualNetCash", label: "税后到手现金", tone: "accent", higherIsBetter: true },
+      { key: "totalTakeHome", dynamicLabel: (kv) => `综合到手（含${kv.fundLabel}）`, compareLabel: "综合到手（含公积金/MPF）", tone: "accent", higherIsBetter: true },
+      { key: "annualSubsidy", label: "年其他补贴", tone: "", higherIsBetter: true },
+      { key: "bonusGross", label: "年终奖税前", tone: "", higherIsBetter: true },
+      { key: "bonusNet", label: "年终奖到手", tone: "", higherIsBetter: true },
+      { key: "signingBonusGross", label: "签字费税前", tone: "", higherIsBetter: true },
+      { key: "signingBonusNet", label: "签字费到手", tone: "", higherIsBetter: true },
+      { key: "annualTax", label: "个税合计", tone: "warm", higherIsBetter: false },
+      { key: "housingEmployee", dynamicLabel: (kv) => `${kv.fundLabel}·个人（可提取）`, compareLabel: "公积金/MPF·个人（可提取）", tone: "", higherIsBetter: true },
+      { key: "housingEmployer", dynamicLabel: (kv) => `${kv.fundLabel}·公司（可提取）`, compareLabel: "公积金/MPF·公司（可提取）", tone: "", higherIsBetter: true },
+      { key: "housingTotal", dynamicLabel: (kv) => `${kv.fundLabel}·账户合计`, compareLabel: "公积金/MPF·账户合计", tone: "", higherIsBetter: true },
+      { key: "employeeContribTotal", label: "个人五险一金/MPF", tone: "", higherIsBetter: false },
+      { key: "employerContribTotal", label: "公司五险一金/MPF", tone: "", higherIsBetter: true },
+      { key: "employerCost", label: "综合雇主成本", tone: "warm", higherIsBetter: true },
+    ];
+
+    function getMetricValues(result) {
+      const housing = housingFundBreakdown(result);
+      const employerCost = result.annualGross + result.employerContribTotal;
+      const totalTakeHome = result.annualNetCash + housing.total;
+      return {
+        annualGross: result.annualGross,
+        annualNetCash: result.annualNetCash,
+        totalTakeHome,
+        annualSubsidy: result.annualSubsidy || 0,
+        bonusGross: result.bonusGross,
+        bonusNet: result.bonusNet,
+        signingBonusGross: result.signingBonusGross || 0,
+        signingBonusNet: result.signingBonusNet || 0,
+        annualTax: result.annualTax,
+        housingEmployee: housing.employee,
+        housingEmployer: housing.employer,
+        housingTotal: housing.total,
+        employeeContribTotal: result.employeeContribTotal,
+        employerContribTotal: result.employerContribTotal,
+        employerCost,
+        fundLabel: housing.label,
+      };
+    }
+
+    function getMetricLabel(spec, metricValues, crossRegion = false) {
+      if (crossRegion && spec.compareLabel) return spec.compareLabel;
+      if (spec.dynamicLabel) return spec.dynamicLabel(metricValues);
+      return spec.label;
+    }
+
+    function toCnyValues(result, hkdToCny) {
+      const rate = result.region === "hongkong" ? hkdToCny : 1;
+      const values = getMetricValues(result);
+      return Object.fromEntries(
+        Object.entries(values)
+          .filter(([key]) => key !== "fundLabel")
+          .map(([key, value]) => [key, value * rate]),
+      );
+    }
+
+    function renderSummary(result) {
+      const hkdToCny = getHkdToCny();
+      const metricValues = getMetricValues(result);
+      summaryGrid.innerHTML = SUMMARY_METRIC_SPECS.map((spec) => {
+        const label = getMetricLabel(spec, metricValues, false);
+        const value = metricValues[spec.key];
+        const cnyValue = result.region === "hongkong" ? cnyMoney(value * hkdToCny) : null;
+        return `
+          <div class="metric ${spec.tone}">
+            <span>${label}</span>
+            <strong>${money(value, result.region)}</strong>
+            ${cnyValue ? `<span class="cny-note">≈ ${cnyValue}</span>` : ""}
+          </div>
+        `;
+      }).join("") + (result.region === "hongkong" ? `<div class="metric wide"><span>汇率</span><strong>1 HKD = ${formatRate(hkdToCny)} CNY</strong><span class="cny-note">${exchangeRateState.isManual ? "手动输入" : exchangeRateState.source}${exchangeRateState.quoteDate ? ` · ${exchangeRateState.quoteDate}` : ""}</span></div>` : "");
+    }
+
+    function renderCompareSummaryGrid(resultA, resultB, cnyA, cnyB, hkdToCny, shortLabelA, shortLabelB) {
+      const crossRegion = resultA.region !== resultB.region;
+      const compareClass = (self, other, higherIsBetter) => {
+        if (self === other) return "";
+        const wins = higherIsBetter ? self > other : self < other;
+        return wins ? "better" : "worse";
+      };
+
+      compareSummaryGrid.innerHTML = SUMMARY_METRIC_SPECS.map((spec) => {
+        const label = getMetricLabel(spec, getMetricValues(resultA), crossRegion);
+        const valueA = cnyA[spec.key];
+        const valueB = cnyB[spec.key];
+        const diff = valueB - valueA;
+        const diffClass = diff > 0 ? "pos" : diff < 0 ? "neg" : "";
+        const classA = compareClass(valueA, valueB, spec.higherIsBetter);
+        const classB = compareClass(valueB, valueA, spec.higherIsBetter);
+        return `
+          <div class="compare-summary-card ${spec.tone}">
+            <span class="metric-name">${label}</span>
+            <div class="compare-metric-grid">
+              <div class="compare-offer ${classA}">
+                <span class="compare-offer-name">${shortLabelA}</span>
+                <strong>${cnyMoney(valueA)}</strong>
+              </div>
+              <div class="compare-offer ${classB}">
+                <span class="compare-offer-name">${shortLabelB}</span>
+                <strong>${cnyMoney(valueB)}</strong>
+              </div>
+            </div>
+            <div class="metric-diff ${diffClass}">差额 B-A：${diff >= 0 ? "+" : ""}${cnyMoney(diff)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderCompareCell(valueCny, result, hkdToCny, cssClass) {
+      const nativeValue = result.region === "hongkong" ? valueCny / hkdToCny : valueCny;
+      return `
+        <td class="${cssClass}">
+          ${cnyMoney(valueCny)}
+          <span class="cny-note">${moneyForRegion(nativeValue, result.region)}</span>
+        </td>
+      `;
+    }
+
+    function renderCompareMetricCard(label, valueA, valueB, diff, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB) {
+      const nativeA = resultA.region === "hongkong" ? valueA / hkdToCny : valueA;
+      const nativeB = resultB.region === "hongkong" ? valueB / hkdToCny : valueB;
+      const diffText = `${diff >= 0 ? "+" : ""}${cnyMoney(diff)}`;
+      const diffClass = diff > 0 ? "diff-pos" : diff < 0 ? "diff-neg" : "";
+      return `
+        <div class="compare-metric-card">
+          <div class="compare-metric-label">${label}</div>
+          <div class="compare-metric-grid">
+            <div class="compare-offer ${classA}">
+              <span class="compare-offer-name">${shortLabelA}</span>
+              <strong>${cnyMoney(valueA)}</strong>
+              <span class="cny-note">${moneyForRegion(nativeA, resultA.region)}</span>
+            </div>
+            <div class="compare-offer ${classB}">
+              <span class="compare-offer-name">${shortLabelB}</span>
+              <strong>${cnyMoney(valueB)}</strong>
+              <span class="cny-note">${moneyForRegion(nativeB, resultB.region)}</span>
+            </div>
+          </div>
+          <div class="compare-diff ${diffClass}">差额 B-A：${diffText}</div>
+        </div>
+      `;
+    }
+
+    function renderComparison(resultA, resultB) {
+      const hkdToCny = getHkdToCny();
+      const cnyA = toCnyValues(resultA, hkdToCny);
+      const cnyB = toCnyValues(resultB, hkdToCny);
+      const crossRegion = resultA.region !== resultB.region;
+      const labelA = `Offer A (${REGION_LABELS[resultA.region]})`;
+      const labelB = `Offer B (${REGION_LABELS[resultB.region]})`;
+      const shortLabelA = `A · ${REGION_LABELS[resultA.region]}`;
+      const shortLabelB = `B · ${REGION_LABELS[resultB.region]}`;
+      document.querySelector("#compareHeaderA").textContent = labelA;
+      document.querySelector("#compareHeaderB").textContent = labelB;
+      document.querySelector("#compareNote").innerHTML = crossRegion || resultA.region === "hongkong" || resultB.region === "hongkong"
+        ? `<span class="note-text-full">与单独计算相同的 15 项指标统一换算为 CNY · 1 HKD = ${formatRate(hkdToCny)} CNY · 含雇主成本与五险一金/MPF 明细 · ${exchangeRateState.isManual ? "手动汇率" : exchangeRateState.source}</span><span class="note-text-short">15 项指标 CNY 对比 · 含雇主成本</span>`
+        : `<span class="note-text-full">与单独计算相同的 15 项指标统一换算为 CNY · 含雇主成本与五险一金明细</span><span class="note-text-short">15 项指标 CNY 对比 · 含雇主成本</span>`;
+
+      renderCompareSummaryGrid(resultA, resultB, cnyA, cnyB, hkdToCny, shortLabelA, shortLabelB);
+
+      const compareClass = (self, other, higherIsBetter) => {
+        if (self === other) return "";
+        const wins = higherIsBetter ? self > other : self < other;
+        return wins ? "better" : "worse";
+      };
+
+      const sections = [
+        {
+          title: "年度综合对比（与单独计算一致）",
+          rows: SUMMARY_METRIC_SPECS.map((spec) => ({
+            label: getMetricLabel(spec, getMetricValues(resultA), crossRegion),
+            key: spec.key,
+            higherIsBetter: spec.higherIsBetter,
+          })),
+        },
+      ];
+
+      const breakdownAEmployee = Object.fromEntries(employeeContributionBreakdown(resultA).map((item) => [item.name, item.annual]));
+      const breakdownBEmployee = Object.fromEntries(employeeContributionBreakdown(resultB).map((item) => [item.name, item.annual]));
+      const employeeNames = [...new Set([
+        ...employeeContributionBreakdown(resultA).map((item) => item.name),
+        ...employeeContributionBreakdown(resultB).map((item) => item.name),
+      ])];
+
+      const breakdownAEmployer = Object.fromEntries(employerContributionBreakdown(resultA).map((item) => [item.name, item.annual]));
+      const breakdownBEmployer = Object.fromEntries(employerContributionBreakdown(resultB).map((item) => [item.name, item.annual]));
+      const employerNames = [...new Set([
+        ...employerContributionBreakdown(resultA).map((item) => item.name),
+        ...employerContributionBreakdown(resultB).map((item) => item.name),
+      ])];
+
+      let tableHtml = "";
+      let cardsHtml = "";
+      for (const section of sections) {
+        tableHtml += `<tr class="compare-section"><td colspan="4">${section.title}</td></tr>`;
+        cardsHtml += `<div class="compare-section-block"><div class="compare-section-title">${section.title}</div>`;
+        for (const row of section.rows) {
+          const valueA = cnyA[row.key];
+          const valueB = cnyB[row.key];
+          const diff = valueB - valueA;
+          const classA = compareClass(valueA, valueB, row.higherIsBetter);
+          const classB = compareClass(valueB, valueA, row.higherIsBetter);
+          tableHtml += `
+            <tr>
+              <td>${row.label}</td>
+              ${renderCompareCell(valueA, resultA, hkdToCny, classA)}
+              ${renderCompareCell(valueB, resultB, hkdToCny, classB)}
+              <td>${diff >= 0 ? "+" : ""}${cnyMoney(diff)}</td>
+            </tr>
+          `;
+          cardsHtml += renderCompareMetricCard(
+            row.label, valueA, valueB, diff, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB,
+          );
+        }
+        cardsHtml += `</div>`;
+      }
+
+      tableHtml += `<tr class="compare-section"><td colspan="4">个人缴纳明细（年）</td></tr>`;
+      cardsHtml += `<div class="compare-section-block"><div class="compare-section-title">个人缴纳明细（年）</div>`;
+      for (const name of employeeNames) {
+        const rateA = resultA.region === "hongkong" ? hkdToCny : 1;
+        const rateB = resultB.region === "hongkong" ? hkdToCny : 1;
+        const valueA = (breakdownAEmployee[name] || 0) * rateA;
+        const valueB = (breakdownBEmployee[name] || 0) * rateB;
+        const diff = valueB - valueA;
+        const classA = compareClass(valueA, valueB, false);
+        const classB = compareClass(valueB, valueA, false);
+        tableHtml += `
+          <tr>
+            <td>个人·${name}</td>
+            ${renderCompareCell(valueA, resultA, hkdToCny, classA)}
+            ${renderCompareCell(valueB, resultB, hkdToCny, classB)}
+            <td>${diff >= 0 ? "+" : ""}${cnyMoney(diff)}</td>
+          </tr>
+        `;
+        cardsHtml += renderCompareMetricCard(
+          `个人·${name}`, valueA, valueB, diff, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB,
+        );
+      }
+      cardsHtml += `</div>`;
+
+      tableHtml += `<tr class="compare-section"><td colspan="4">公司缴纳明细（年）</td></tr>`;
+      cardsHtml += `<div class="compare-section-block"><div class="compare-section-title">公司缴纳明细（年）</div>`;
+      for (const name of employerNames) {
+        const rateA = resultA.region === "hongkong" ? hkdToCny : 1;
+        const rateB = resultB.region === "hongkong" ? hkdToCny : 1;
+        const valueA = (breakdownAEmployer[name] || 0) * rateA;
+        const valueB = (breakdownBEmployer[name] || 0) * rateB;
+        const diff = valueB - valueA;
+        const classA = compareClass(valueA, valueB, true);
+        const classB = compareClass(valueB, valueA, true);
+        tableHtml += `
+          <tr>
+            <td>公司·${name}</td>
+            ${renderCompareCell(valueA, resultA, hkdToCny, classA)}
+            ${renderCompareCell(valueB, resultB, hkdToCny, classB)}
+            <td>${diff >= 0 ? "+" : ""}${cnyMoney(diff)}</td>
+          </tr>
+        `;
+        cardsHtml += renderCompareMetricCard(
+          `公司·${name}`, valueA, valueB, diff, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB,
+        );
+      }
+      cardsHtml += `</div>`;
+
+      compareRows.innerHTML = tableHtml;
+      compareCards.innerHTML = cardsHtml;
+    }
+
+    function renderMonthly(result) {
+      monthlyRows.innerHTML = result.monthly.map((item) => `
+        <tr>
+          <td>${item.month}</td>
+          <td>${plainMoney(item.gross)}</td>
+          <td>${plainMoney(item.employeeContrib)}</td>
+          <td>${plainMoney(item.taxableIncome)}</td>
+          <td>${plainMoney(item.tax)}</td>
+          <td>${plainMoney(item.netCash)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderContributions(result) {
+      contributionRows.innerHTML = result.contributions.map((item) => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${plainMoney(item.base)}</td>
+          <td>${percent(item.employeeRate)}</td>
+          <td>${plainMoney(item.employeeAmount)}</td>
+          <td>${percent(item.employerRate)}</td>
+          <td>${plainMoney(item.employerAmount)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function syncBonusInputs() {
+      syncOfferBonusInputs("");
+      syncOfferBonusInputs("offerA");
+      syncOfferBonusInputs("offerB");
+    }
+
+    function updateVisibility() {
+      const isCompare = state.mode === "compare";
+      document.querySelectorAll("[data-mode]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.mode === state.mode));
+      });
+      document.querySelectorAll("[data-region]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.region === state.region));
+      });
+      document.querySelectorAll(".single-only").forEach((node) => {
+        node.classList.toggle("hidden", isCompare);
+      });
+      document.querySelectorAll(".compare-only").forEach((node) => {
+        node.classList.toggle("hidden", !isCompare);
+      });
+      modeLayout.classList.toggle("compare-active", isCompare);
+
+      const offerARegion = document.querySelector("#offerARegion").value;
+      const offerBRegion = document.querySelector("#offerBRegion").value;
+      const activeRegion = isCompare
+        ? (offerARegion === "hongkong" || offerBRegion === "hongkong" ? "hongkong" : "shenzhen")
+        : state.region;
+
+      document.querySelectorAll(".shenzhen-only").forEach((node) => {
+        const show = isCompare
+          ? (document.querySelector("#offerARegion").value === "shenzhen" || document.querySelector("#offerBRegion").value === "shenzhen")
+          : state.region === "shenzhen";
+        node.classList.toggle("hidden", !show);
+      });
+      document.querySelectorAll(".hk-only").forEach((node) => {
+        const show = isCompare
+          ? (document.querySelector("#offerARegion").value === "hongkong" || document.querySelector("#offerBRegion").value === "hongkong")
+          : state.region === "hongkong";
+        node.classList.toggle("hidden", !show);
+      });
+      document.querySelectorAll(".hk-exchange-only").forEach((node) => {
+        const showHk = isCompare
+          ? false
+          : needsExchangeRateForSingle() || isChinaMirrorSite();
+        node.classList.toggle("hidden", !showHk);
+      });
+
+      updateMirrorLink();
+
+      updateIncomeFieldLabels("");
+      updateIncomeFieldLabels("offerA");
+      updateIncomeFieldLabels("offerB");
+      updateInputCurrencyNote("", state.region);
+      updateInputCurrencyNote("offerA", document.querySelector("#offerARegion").value);
+      updateInputCurrencyNote("offerB", document.querySelector("#offerBRegion").value);
+
+      if (isCompare) {
+        currencyPill.textContent = "CNY 对比";
+      } else {
+        currencyPill.textContent = `输入 ${currencyTag(getInputCurrency(""))}`;
+      }
+      monthlyNote.textContent = activeRegion === "hongkong" ? "香港税额按全年估算摊入每月" : "大陆工资个税按累计预扣法";
+    }
+
+    function render() {
+      syncBonusInputs();
+      updateVisibility();
+
+      if (state.mode === "compare") {
+        const regionA = document.querySelector("#offerARegion").value;
+        const regionB = document.querySelector("#offerBRegion").value;
+        const incomeA = readIncomeAmounts("offerA", regionA);
+        const incomeB = readIncomeAmounts("offerB", regionB);
+        const resultA = calculateForRegion(
+          regionA,
+          incomeA.monthlyBase,
+          incomeA.monthlySubsidy,
+          incomeA.bonus,
+          incomeA.signingBonus,
+        );
+        const resultB = calculateForRegion(
+          regionB,
+          incomeB.monthlyBase,
+          incomeB.monthlySubsidy,
+          incomeB.bonus,
+          incomeB.signingBonus,
+        );
+        renderComparison(resultA, resultB);
+        bonusNote.textContent = `Offer A: ${REGION_LABELS[resultA.region]} ${moneyForRegion(resultA.annualNetCash, resultA.region)} 到手 · Offer B: ${REGION_LABELS[resultB.region]} ${moneyForRegion(resultB.annualNetCash, resultB.region)} 到手`;
+        return;
+      }
+
+      const result = state.region === "hongkong" ? calculateHongKong() : calculateShenzhen();
+      renderSummary(result);
+      renderMonthly(result);
+      renderContributions(result);
+      bonusNote.textContent = state.region === "hongkong"
+        ? `年终奖 ${money(result.bonusGross, result.region)} 已并入全年薪俸税${result.signingBonusGross ? ` · 签字费 ${money(result.signingBonusGross, result.region)} 同上` : ""}`
+        : `年终奖税前 ${money(result.bonusGross, result.region)}，个税 ${money(result.bonusTax, result.region)}${result.signingBonusGross ? ` · 签字费税前 ${money(result.signingBonusGross, result.region)}，个税 ${money(result.signingBonusTax, result.region)}` : ""}`;
+    }
+
+    initContributionInputs();
+    bindRateInput(hkdToCnyInput);
+    bindRateInput(singleHkdToCnyInput);
+    if (refreshRateBtn) {
+      refreshRateBtn.addEventListener("click", async () => {
+        refreshRateBtn.disabled = true;
+        refreshRateBtn.textContent = "刷新中…";
+        exchangeRateState.isManual = false;
+        const live = await fetchLiveExchangeRate();
+        if (!live) {
+          const cached = readCachedExchangeRate();
+          if (cached) {
+            applyExchangeRate(cached.rate, `${cached.source}（本地缓存）`, cached.quoteDate, { isLive: false });
+          } else {
+            applyExchangeRate(DEFAULT_HKD_TO_CNY, "本地默认值", null, { isLive: false });
+          }
+        }
+        refreshRateBtn.textContent = "刷新汇率";
+        refreshRateBtn.disabled = false;
+      });
+    }
+    document.querySelectorAll("[data-mode]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.mode = button.dataset.mode;
+        render();
+      });
+    });
+    document.querySelectorAll("[data-region]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.region = button.dataset.region;
+        syncDefaultInputCurrency("", state.region);
+        render();
+      });
+    });
+    document.querySelector("#offerARegion").addEventListener("change", () => {
+      syncDefaultInputCurrency("offerA", document.querySelector("#offerARegion").value);
+      render();
+    });
+    document.querySelector("#offerBRegion").addEventListener("change", () => {
+      syncDefaultInputCurrency("offerB", document.querySelector("#offerBRegion").value);
+      render();
+    });
+    form.addEventListener("input", render);
+    form.addEventListener("change", render);
+    initExchangeRate();
+  </script>
+</body>
+</html>
