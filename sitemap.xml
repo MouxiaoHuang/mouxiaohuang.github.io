@@ -1,7 +1,21 @@
+---
+layout: null
+---
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://mouxiaohuang.github.io/</loc>
-    <changefreq>daily</changefreq>
+    <loc>{{ site.url }}{{ site.baseurl }}/</loc>
+  </url>
+  <url>
+    <loc>{{ site.url }}{{ site.baseurl }}/blogs/</loc>
+  </url>
+  <url>
+    <loc>{{ site.url }}{{ site.baseurl }}/tools/</loc>
+  </url>
+  <url>
+    <loc>{{ site.url }}{{ site.baseurl }}/tools/salary-calculator/</loc>
+  </url>
+  <url>
+    <loc>{{ site.url }}{{ site.baseurl }}/404.html</loc>
   </url>
 </urlset>
