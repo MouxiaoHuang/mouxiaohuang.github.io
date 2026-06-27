@@ -705,6 +705,34 @@
         min-width: 0;
         width: 100%;
       }
+
+      .schedule-row {
+        grid-template-columns: 1fr;
+        min-width: 0;
+      }
+
+      .schedule-times {
+        display: flex;
+        gap: 8px;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .schedule-times input[type="time"] {
+        flex: 1 1 0;
+        width: 0;
+        min-width: 0;
+        max-width: 100%;
+        padding: 8px 6px;
+      }
+
+      .rate-uniform-schedule .field input[type="time"],
+      .rate-offer-fields .field.wide > .field-grid .field input[type="time"] {
+        min-width: 0;
+        max-width: 100%;
+        -webkit-min-logical-width: 0;
+      }
     }
 
     .metric.wide {
@@ -842,13 +870,23 @@
       }
 
       .schedule-row {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 6px;
+        grid-template-columns: 1fr;
+        gap: 4px;
+        min-width: 0;
       }
 
       .schedule-row .day-label {
-        grid-column: 1 / -1;
         font-size: 12px;
+      }
+
+      .schedule-times {
+        gap: 6px;
+      }
+
+      .schedule-times input[type="time"] {
+        min-height: 40px;
+        padding: 6px 4px;
+        font-size: 15px;
       }
 
       input[type="time"] {
@@ -856,8 +894,9 @@
         min-width: 0;
         max-width: 100%;
         min-height: 40px;
-        padding: 6px 4px;
+        padding: 8px 6px;
         font-size: 15px;
+        -webkit-min-logical-width: 0;
       }
 
       #rateSingleSection .rate-uniform-schedule .field-grid,
@@ -1074,20 +1113,40 @@
     .schedule-grid {
       display: grid;
       gap: 8px;
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
     }
 
     .schedule-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 8px;
+      grid-template-columns: 1fr;
+      gap: 6px;
       align-items: center;
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
     }
 
     .schedule-row .day-label {
-      grid-column: 1 / -1;
       color: var(--muted);
       font-size: 13px;
       font-weight: 600;
+    }
+
+    .schedule-times {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .schedule-times input[type="time"] {
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
     }
 
     input[type="time"] {
@@ -1096,6 +1155,11 @@
       max-width: 100%;
       min-height: 44px;
       font-size: 16px;
+      -webkit-min-logical-width: 0;
+    }
+
+    input[type="time"]::-webkit-date-and-time-value {
+      min-width: 0;
     }
 
     #rateCompareSection .compare-grid {
@@ -2508,6 +2572,18 @@
     };
 
     const RATE_WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"];
+
+    function buildRatePerDayRowHtml(day, startId, endId) {
+      return `
+        <div class="schedule-row">
+          <span class="day-label" data-weekday="${day}">${day}</span>
+          <div class="schedule-times">
+            <input type="time" id="${startId}" value="09:00" aria-label="${day} start">
+            <input type="time" id="${endId}" value="20:30" aria-label="${day} end">
+          </div>
+        </div>
+      `;
+    }
 
     const DEFAULT_HKD_TO_CNY = 0.86;
     const EXCHANGE_CACHE_KEY = "salary_calc_hkd_cny_cache";
@@ -4051,13 +4127,7 @@
       const id = (name) => rateFieldId(p, name);
       const perDayRows = RATE_WEEKDAYS.map((day) => {
         const dayKey = day.charAt(0).toUpperCase() + day.slice(1);
-        return `
-          <div class="schedule-row">
-            <span class="day-label" data-weekday="${day}">${day}</span>
-            <input type="time" id="${id(`${dayKey}Start`)}" value="09:00">
-            <input type="time" id="${id(`${dayKey}End`)}" value="20:30">
-          </div>
-        `;
+        return buildRatePerDayRowHtml(day, id(`${dayKey}Start`), id(`${dayKey}End`));
       }).join("");
       return `
         <div class="field wide">
@@ -4148,13 +4218,7 @@
       if (!container || container.childElementCount > 0) return;
       container.innerHTML = RATE_WEEKDAYS.map((day) => {
         const dayKey = day.charAt(0).toUpperCase() + day.slice(1);
-        return `
-          <div class="schedule-row">
-            <span class="day-label" data-weekday="${day}">${day}</span>
-            <input type="time" id="rate${dayKey}Start" value="09:00">
-            <input type="time" id="rate${dayKey}End" value="20:30">
-          </div>
-        `;
+        return buildRatePerDayRowHtml(day, `rate${dayKey}Start`, `rate${dayKey}End`);
       }).join("");
     }
 
