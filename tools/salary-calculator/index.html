@@ -1285,6 +1285,10 @@
       min-height: 96px;
     }
 
+    .rate-compare-adjustments {
+      margin-bottom: 12px;
+    }
+
     .rate-variant-panel {
       padding: 14px;
       border-top: 1px solid var(--line);
@@ -1754,6 +1758,33 @@
               <input id="rateHkdToCny" type="number" min="0" step="0.0001" value="0.86">
             </div>
             <div class="field wide">
+              <div class="toggle-row">
+                <label class="toggle-label" for="rateIncludeCommute">Include commute time</label>
+                <div class="toggle-switch">
+                  <input id="rateIncludeCommute" type="checkbox">
+                  <span class="toggle-slider" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+            <div class="field wide">
+              <div class="toggle-row">
+                <label class="toggle-label" for="rateDeductLunch">Deduct lunch / break</label>
+                <div class="toggle-switch">
+                  <input id="rateDeductLunch" type="checkbox">
+                  <span class="toggle-slider" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+            <div class="field wide">
+              <div class="toggle-row">
+                <label class="toggle-label" for="rateIncludePublicHolidays">Deduct public holidays</label>
+                <div class="toggle-switch">
+                  <input id="rateIncludePublicHolidays" type="checkbox" checked data-rate-include-public-holidays="">
+                  <span class="toggle-slider" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+            <div class="field wide">
               <label for="rateScheduleMode">Work schedule</label>
               <select id="rateScheduleMode" data-rate-schedule-mode="">
                 <option value="uniform">Same every weekday</option>
@@ -1780,15 +1811,6 @@
             <div class="field">
               <label for="rateVacationDays">Paid vacation days</label>
               <input id="rateVacationDays" type="number" min="0" step="1" value="5">
-            </div>
-            <div class="field wide">
-              <div class="toggle-row">
-                <label class="toggle-label" for="rateIncludePublicHolidays">Deduct public holidays</label>
-                <div class="toggle-switch">
-                  <input id="rateIncludePublicHolidays" type="checkbox" checked data-rate-include-public-holidays="">
-                  <span class="toggle-slider" aria-hidden="true"></span>
-                </div>
-              </div>
             </div>
             <div class="field wide rate-public-holidays-field" data-rate-public-holidays="">
               <label for="ratePublicHolidays">Public holidays</label>
@@ -1820,24 +1842,6 @@
               <label for="rateLunchMinutes">Lunch / break (min)</label>
               <input id="rateLunchMinutes" type="number" min="0" step="1" value="0">
             </div>
-            <div class="field wide">
-              <div class="toggle-row">
-                <label class="toggle-label" for="rateIncludeCommute">Include commute time</label>
-                <div class="toggle-switch">
-                  <input id="rateIncludeCommute" type="checkbox">
-                  <span class="toggle-slider" aria-hidden="true"></span>
-                </div>
-              </div>
-            </div>
-            <div class="field wide">
-              <div class="toggle-row">
-                <label class="toggle-label" for="rateDeductLunch">Deduct lunch / break</label>
-                <div class="toggle-switch">
-                  <input id="rateDeductLunch" type="checkbox">
-                  <span class="toggle-slider" aria-hidden="true"></span>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -1845,17 +1849,7 @@
           <div class="section-title">
             <h2>Compare schedules</h2>
           </div>
-          <div class="compare-grid">
-            <div class="offer-card">
-              <h3 data-i18n-rate="compare.offerATitle">Offer A</h3>
-              <div class="field-grid rate-offer-fields" data-rate-offer="rateOfferA"></div>
-            </div>
-            <div class="offer-card">
-              <h3 data-i18n-rate="compare.offerBTitle">Offer B</h3>
-              <div class="field-grid rate-offer-fields" data-rate-offer="rateOfferB"></div>
-            </div>
-          </div>
-          <div class="rate-compare-adjustments" style="margin-top: 12px;">
+          <div class="rate-compare-adjustments">
             <div class="field wide">
               <div class="toggle-row">
                 <label class="toggle-label" for="rateCompareIncludeCommute">Include commute time (both offers)</label>
@@ -1873,6 +1867,25 @@
                   <span class="toggle-slider" aria-hidden="true"></span>
                 </div>
               </div>
+            </div>
+            <div class="field wide">
+              <div class="toggle-row">
+                <label class="toggle-label" for="rateCompareIncludePublicHolidays">Deduct public holidays (both offers)</label>
+                <div class="toggle-switch">
+                  <input id="rateCompareIncludePublicHolidays" type="checkbox" checked>
+                  <span class="toggle-slider" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="compare-grid">
+            <div class="offer-card">
+              <h3 data-i18n-rate="compare.offerATitle">Offer A</h3>
+              <div class="field-grid rate-offer-fields" data-rate-offer="rateOfferA"></div>
+            </div>
+            <div class="offer-card">
+              <h3 data-i18n-rate="compare.offerBTitle">Offer B</h3>
+              <div class="field-grid rate-offer-fields" data-rate-offer="rateOfferB"></div>
             </div>
           </div>
           <div class="field wide rate-compare-exchange hidden" style="margin-top: 12px;">
@@ -2174,6 +2187,7 @@
         "rate.variant.both": "Standard (incl. commute, lunch deducted)",
         "label.rateCompareIncludeCommute": "Include commute time (both offers)",
         "label.rateCompareDeductLunch": "Deduct lunch / break (both offers)",
+        "label.rateCompareIncludePublicHolidays": "Deduct public holidays (both offers)",
         "rate.metric.regularWorkDays": "Regular work days",
         "rate.metric.totalWorkDays": "Total work days",
         "rate.metric.totalHours": "Total work hours",
@@ -2373,6 +2387,7 @@
         "rate.variant.both": "标准（含通勤、扣除午休）",
         "label.rateCompareIncludeCommute": "考虑通勤时间（两个 Offer 均适用）",
         "label.rateCompareDeductLunch": "扣除午休/吃饭（两个 Offer 均适用）",
+        "label.rateCompareIncludePublicHolidays": "扣除法定节假日（两个 Offer 均适用）",
         "rate.metric.totalWorkDays": "总工作日",
         "rate.metric.totalHours": "总工时",
         "rate.metric.grossDaily": "税前日薪",
@@ -3081,33 +3096,29 @@
       });
     }
 
-    function syncRatePublicHolidaysVisibility(prefix = "") {
-      const include = document.querySelector(`#${rateFieldId(prefix, "includePublicHolidays")}`)?.checked ?? true;
-      document.querySelector(`#${rateFieldId(prefix, "publicHolidays")}`)?.closest(".rate-public-holidays-field")
+    function syncRatePublicHolidaysVisibility() {
+      const isCompare = state.calculatorType === "rate" && state.mode === "compare";
+      if (isCompare) {
+        const include = document.querySelector("#rateCompareIncludePublicHolidays")?.checked ?? true;
+        document.querySelectorAll(".rate-offer-public-holidays-field").forEach((node) => {
+          node.classList.toggle("hidden", !include);
+        });
+        return;
+      }
+      const include = document.querySelector("#rateIncludePublicHolidays")?.checked ?? true;
+      document.querySelector("#ratePublicHolidays")?.closest(".rate-public-holidays-field")
         ?.classList.toggle("hidden", !include);
     }
 
-    function buildRatePublicHolidaysFieldsHtml(prefix) {
+    function buildRateOfferPublicHolidaysDaysHtml(prefix) {
       const id = (name) => rateFieldId(prefix, name);
       const region = prefix === "offerB" ? "hongkong" : "shenzhen";
       const defaultDays = defaultPublicHolidaysForRegion(region);
-      const noteId = prefix ? `${prefix}PublicHolidaysNote` : "ratePublicHolidaysNote";
-      const dataPrefix = prefix ? ` data-rate-public-holidays="${prefix}"` : "";
-      const toggleData = prefix ? ` data-rate-include-public-holidays="${prefix}"` : ' data-rate-include-public-holidays=""';
       return `
-        <div class="field wide">
-          <div class="toggle-row">
-            <label class="toggle-label" for="${id("includePublicHolidays")}">Deduct public holidays</label>
-            <div class="toggle-switch">
-              <input id="${id("includePublicHolidays")}" type="checkbox" checked${toggleData}>
-              <span class="toggle-slider" aria-hidden="true"></span>
-            </div>
-          </div>
-        </div>
-        <div class="field wide rate-public-holidays-field"${dataPrefix}>
+        <div class="field wide rate-public-holidays-field rate-offer-public-holidays-field" data-rate-public-holidays="${prefix}">
           <label for="${id("publicHolidays")}">Public holidays</label>
           <input id="${id("publicHolidays")}" type="number" min="0" step="1" value="${defaultDays}">
-          <span class="mini-note" id="${noteId}"></span>
+          <span class="mini-note" id="${prefix}PublicHolidaysNote"></span>
         </div>
       `;
     }
@@ -3946,7 +3957,9 @@
         overtimeDays: Number(document.querySelector(`#${rateFieldId(prefix, "overtimeDays")}`)?.value) || 0,
         overtimeDailyHours: hoursBetweenStartEnd(overtimeStart, overtimeEnd),
         publicHolidays: Number(document.querySelector(`#${rateFieldId(prefix, "publicHolidays")}`)?.value) || 0,
-        includePublicHolidays: document.querySelector(`#${rateFieldId(prefix, "includePublicHolidays")}`)?.checked ?? true,
+        includePublicHolidays: state.calculatorType === "rate" && state.mode === "compare"
+          ? readRateCompareAdjustments().includePublicHolidays
+          : document.querySelector(`#${rateFieldId(prefix, "includePublicHolidays")}`)?.checked ?? true,
         commuteMinutes: Number(document.querySelector(`#${rateFieldId(prefix, "commuteMinutes")}`)?.value) || 0,
         lunchMinutes: Number(document.querySelector(`#${rateFieldId(prefix, "lunchMinutes")}`)?.value) || 0,
         includeCommute: state.calculatorType === "rate" && state.mode === "compare" && prefix
@@ -4016,6 +4029,7 @@
       return {
         includeCommute: Boolean(document.querySelector("#rateCompareIncludeCommute")?.checked),
         deductLunch: Boolean(document.querySelector("#rateCompareDeductLunch")?.checked),
+        includePublicHolidays: document.querySelector("#rateCompareIncludePublicHolidays")?.checked ?? true,
       };
     }
 
@@ -4268,7 +4282,7 @@
           <label for="${id("vacationDays")}">Paid vacation days</label>
           <input id="${id("vacationDays")}" type="number" min="0" step="1" value="5">
         </div>
-        ${buildRatePublicHolidaysFieldsHtml(p)}
+        ${buildRateOfferPublicHolidaysDaysHtml(p)}
         <div class="field">
           <label for="${id("overtimeDays")}">Extra overtime days</label>
           <input id="${id("overtimeDays")}" type="number" min="0" step="1" value="0">
@@ -4314,8 +4328,8 @@
         const regionSelect = document.querySelector(`#${prefix}RateRegion`);
         if (regionSelect) regionSelect.value = prefix === "offerA" ? "shenzhen" : "hongkong";
         syncRateRegionDefaults(prefix, regionSelect?.value || "shenzhen");
-        syncRatePublicHolidaysVisibility(prefix);
       });
+      syncRatePublicHolidaysVisibility();
     }
 
     function syncRateScheduleVisibility(prefix = "") {
@@ -4371,6 +4385,7 @@
       document.querySelector("label[for='rateCompareHkdToCny']")?.replaceChildren(t("label.hkdToCny"));
       document.querySelector("label[for='rateCompareIncludeCommute']")?.replaceChildren(t("label.rateCompareIncludeCommute"));
       document.querySelector("label[for='rateCompareDeductLunch']")?.replaceChildren(t("label.rateCompareDeductLunch"));
+      document.querySelector("label[for='rateCompareIncludePublicHolidays']")?.replaceChildren(t("label.rateCompareIncludePublicHolidays"));
 
       ["rateInputCurrency"].forEach((selectId) => {
         document.querySelector(`#${selectId}`)?.querySelectorAll("option").forEach((option) => {
@@ -4447,9 +4462,7 @@
         syncRateScheduleVisibility("");
         syncRateScheduleVisibility("offerA");
         syncRateScheduleVisibility("offerB");
-        syncRatePublicHolidaysVisibility("");
-        syncRatePublicHolidaysVisibility("offerA");
-        syncRatePublicHolidaysVisibility("offerB");
+        syncRatePublicHolidaysVisibility();
         updateRatePublicHolidaysNote("", state.region);
         updateRatePublicHolidaysNote("offerA", getRateRegion("offerA"));
         updateRatePublicHolidaysNote("offerB", getRateRegion("offerB"));
@@ -4596,7 +4609,7 @@
     initRatePerDaySchedule();
     initRateCompareFields();
     syncRateRegionDefaults("", state.region);
-    syncRatePublicHolidaysVisibility("");
+    syncRatePublicHolidaysVisibility();
     updateRatePublicHolidaysNote("", state.region);
     initLanguage();
     if (langToggleBtn) {
@@ -4668,10 +4681,9 @@
       }
       if (event.target.matches("[data-rate-region-select]")) {
         syncRateRegionDefaults(event.target.dataset.rateRegionSelect, event.target.value);
-        syncRatePublicHolidaysVisibility(event.target.dataset.rateRegionSelect);
       }
-      if (event.target.matches("[data-rate-include-public-holidays]")) {
-        syncRatePublicHolidaysVisibility(event.target.dataset.rateIncludePublicHolidays);
+      if (event.target.matches("#rateIncludePublicHolidays, #rateCompareIncludePublicHolidays")) {
+        syncRatePublicHolidaysVisibility();
       }
       render();
     });
