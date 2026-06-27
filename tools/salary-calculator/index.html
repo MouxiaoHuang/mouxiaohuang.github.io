@@ -1309,13 +1309,13 @@
 
     .rate-summary-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
     }
 
-    @media (min-width: 900px) {
+    @media (max-width: 640px) {
       .rate-summary-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
@@ -3163,7 +3163,6 @@
     function rateValuesToCny(values, region, hkdToCny) {
       const rate = region === "hongkong" ? hkdToCny : 1;
       return {
-        regularWorkDays: values.regularWorkDays,
         totalWorkDays: values.totalWorkDays,
         totalHours: values.totalHours,
         grossDaily: values.grossDaily * rate,
@@ -3235,7 +3234,7 @@
 
     function compareKindForKey(key) {
       if (key === "totalHours") return "hours";
-      if (key === "regularWorkDays" || key === "totalWorkDays") return "count";
+      if (key === "totalWorkDays") return "count";
       return "money";
     }
 
@@ -4032,25 +4031,41 @@
       return { key, labelKey: `rate.variant.${key}` };
     }
 
+    const RATE_DISPLAY_SPECS = [
+      { key: "totalWorkDays", labelKey: "rate.metric.totalWorkDays", isMoney: false, accent: false },
+      { key: "totalHours", labelKey: "rate.metric.totalHours", isMoney: false, accent: false },
+      { key: "grossDaily", labelKey: "rate.metric.grossDaily", isMoney: true, accent: false },
+      { key: "netDaily", labelKey: "rate.metric.netDaily", isMoney: true, accent: false },
+      { key: "grossHourly", labelKey: "rate.metric.grossHourly", isMoney: true, accent: false },
+      { key: "netHourly", labelKey: "rate.metric.netHourly", isMoney: true, accent: true },
+    ];
+
+    const RATE_COMPARE_SPECS = [
+      { key: "totalWorkDays", labelKey: "rate.metric.totalWorkDays", higherIsBetter: true, format: (v) => String(Math.round(v)) },
+      { key: "totalHours", labelKey: "rate.metric.totalHours", higherIsBetter: false, format: (v) => formatHoursValue(v) },
+      { key: "grossDaily", labelKey: "rate.metric.grossDaily", higherIsBetter: true, format: (v) => cnyMoney(v) },
+      { key: "netDaily", labelKey: "rate.metric.netDaily", higherIsBetter: true, format: (v) => cnyMoney(v) },
+      { key: "grossHourly", labelKey: "rate.metric.grossHourly", higherIsBetter: true, format: (v) => cnyMoney(v) },
+      { key: "netHourly", labelKey: "rate.metric.netHourly", higherIsBetter: true, format: (v) => cnyMoney(v) },
+    ];
+
     function renderRateMetricCards(metrics, region, hkdToCny) {
-      const moneyFields = ["grossDaily", "netDaily", "grossHourly", "netHourly"];
-      const items = [
-        { labelKey: "rate.metric.regularWorkDays", value: String(metrics.regularWorkDays), isMoney: false },
-        { labelKey: "rate.metric.totalWorkDays", value: String(metrics.totalWorkDays), isMoney: false },
-        { labelKey: "rate.metric.totalHours", value: formatHoursValue(metrics.totalHours), isMoney: false },
-        { labelKey: "rate.metric.grossDaily", value: metrics.grossDaily, isMoney: true },
-        { labelKey: "rate.metric.netDaily", value: metrics.netDaily, isMoney: true },
-        { labelKey: "rate.metric.grossHourly", value: metrics.grossHourly, isMoney: true },
-        { labelKey: "rate.metric.netHourly", value: metrics.netHourly, isMoney: true, accent: true },
-      ];
-      return items.map((item) => {
-        const display = item.isMoney ? moneyForRegion(item.value, region) : item.value;
-        const cnyNote = item.isMoney && region === "hongkong"
-          ? `<span class="cny-note">≈ ${cnyMoney(item.value * hkdToCny)}</span>`
+      return RATE_DISPLAY_SPECS.map((spec) => {
+        const value = metrics[spec.key];
+        let display;
+        if (spec.key === "totalHours") {
+          display = formatHoursValue(value);
+        } else if (spec.isMoney) {
+          display = moneyForRegion(value, region);
+        } else {
+          display = String(value);
+        }
+        const cnyNote = spec.isMoney && region === "hongkong"
+          ? `<span class="cny-note">≈ ${cnyMoney(value * hkdToCny)}</span>`
           : "";
         return `
-        <div class="metric ${item.accent ? "accent" : ""} ${item.isMoney ? "sub" : ""}">
-          <span>${t(item.labelKey)}</span>
+        <div class="metric ${spec.accent ? "accent" : ""} ${spec.isMoney ? "sub" : ""}">
+          <span>${t(spec.labelKey)}</span>
           <strong>${display}</strong>
           ${cnyNote}
         </div>
@@ -4075,7 +4090,6 @@
           <p class="rate-variant-note">${note}</p>
           <div class="rate-summary-grid">
             ${renderRateMetricCards({
-              regularWorkDays: core.regularWorkDays,
               totalWorkDays: core.totalWorkDays,
               totalHours: variant.totalHours,
               grossDaily: variant.grossDaily,
@@ -4104,20 +4118,9 @@
       document.querySelector("#rateVariantResults").innerHTML = "";
     }
 
-    const RATE_COMPARE_SPECS = [
-      { key: "regularWorkDays", labelKey: "rate.metric.regularWorkDays", higherIsBetter: true, format: (v) => String(Math.round(v)) },
-      { key: "totalWorkDays", labelKey: "rate.metric.totalWorkDays", higherIsBetter: true, format: (v) => String(Math.round(v)) },
-      { key: "totalHours", labelKey: "rate.metric.totalHours", higherIsBetter: false, format: (v) => formatHoursValue(v) },
-      { key: "grossDaily", labelKey: "rate.metric.grossDaily", higherIsBetter: true, format: (v) => cnyMoney(v) },
-      { key: "netDaily", labelKey: "rate.metric.netDaily", higherIsBetter: true, format: (v) => cnyMoney(v) },
-      { key: "grossHourly", labelKey: "rate.metric.grossHourly", higherIsBetter: true, format: (v) => cnyMoney(v) },
-      { key: "netHourly", labelKey: "rate.metric.netHourly", higherIsBetter: true, format: (v) => cnyMoney(v) },
-    ];
-
     function getRateCompareValues(core, variantKey = "base") {
       const variant = core.variants[variantKey];
       return {
-        regularWorkDays: core.regularWorkDays,
         totalWorkDays: core.totalWorkDays,
         totalHours: variant.totalHours,
         grossDaily: variant.grossDaily,
