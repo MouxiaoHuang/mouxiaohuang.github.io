@@ -179,7 +179,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 430px) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 480px) minmax(0, 1fr);
       gap: 16px;
       align-items: start;
       width: 100%;
@@ -663,14 +663,9 @@
       font-weight: 500;
     }
 
-    .mode-layout.compare-active {
-      grid-template-columns: minmax(0, 480px) minmax(0, 1fr);
-    }
-
     @media (max-width: 1024px), (orientation: portrait) and (max-width: 1366px) {
       .layout,
-      .mode-layout,
-      .mode-layout.compare-active {
+      .mode-layout {
         grid-template-columns: 1fr;
       }
 
@@ -952,6 +947,143 @@
         font-size: 12px;
       }
     }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 44px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfc;
+    }
+
+    .toggle-row label.toggle-label {
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.3;
+      cursor: pointer;
+    }
+
+    .toggle-switch {
+      position: relative;
+      flex: 0 0 auto;
+      width: 48px;
+      height: 28px;
+    }
+
+    .toggle-switch input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      z-index: 2;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: #c5d0cb;
+      pointer-events: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .toggle-slider::before {
+      content: "";
+      position: absolute;
+      left: 3px;
+      top: 3px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--surface);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+      transition: transform 0.15s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--accent);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+    }
+
+    .toggle-switch input:focus-visible + .toggle-slider {
+      box-shadow: 0 0 0 3px rgba(11, 127, 171, 0.15);
+    }
+
+    .schedule-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .schedule-row {
+      display: grid;
+      grid-template-columns: 52px 1fr 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .schedule-row .day-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    input[type="time"] {
+      min-height: 44px;
+      font-size: 16px;
+    }
+
+    .rate-variant-panel {
+      padding: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .rate-variant-panel:first-child {
+      border-top: 0;
+    }
+
+    .rate-variant-panel h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--accent);
+    }
+
+    .rate-variant-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .rate-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (min-width: 900px) {
+      .rate-summary-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    .metric.sub {
+      min-height: 80px;
+    }
+
+    .metric.sub strong {
+      font-size: clamp(18px, 1.8vw, 24px);
+    }
   </style>
 </head>
 <body>
@@ -971,7 +1103,17 @@
 
     <div class="layout mode-layout" id="modeLayout">
       <form class="panel controls" id="salaryForm">
-        <section class="panel-section">
+        <section class="panel-section" id="calcTypeSection">
+          <div class="section-title">
+            <h2>Calculator</h2>
+          </div>
+          <div class="segmented" role="group" aria-label="Calculator type">
+            <button type="button" data-calc-type="tax" aria-pressed="true">Tax / Net</button>
+            <button type="button" data-calc-type="rate" aria-pressed="false">Daily / Hourly</button>
+          </div>
+        </section>
+
+        <section class="panel-section" id="modeSection">
           <div class="section-title">
             <h2>Mode</h2>
           </div>
@@ -981,17 +1123,17 @@
           </div>
         </section>
 
-        <section class="panel-section single-only">
+        <section class="panel-section single-only" id="regionSection">
           <div class="section-title">
             <h2>Region</h2>
           </div>
           <div class="segmented" role="group" aria-label="Region">
-            <button type="button" data-region="shenzhen" aria-pressed="true">Shenzhen</button>
+            <button type="button" data-region="shenzhen" aria-pressed="true">Mainland China</button>
             <button type="button" data-region="hongkong" aria-pressed="false">Hong Kong</button>
           </div>
         </section>
 
-        <section class="panel-section compare-only hidden">
+        <section class="panel-section compare-only tax-only hidden" id="compareOffersSection">
           <div class="section-title">
             <h2>Compare Offers</h2>
           </div>
@@ -1097,10 +1239,11 @@
           </div>
         </section>
 
-        <section class="panel-section compare-only hidden" id="compareShenzhenContribSection">
+        <section class="panel-section compare-only tax-only hidden" id="compareShenzhenContribSection">
           <div class="section-title">
-            <h2>Shenzhen social insurance & housing fund (per offer)</h2>
+            <h2>Social insurance & housing fund (per offer)</h2>
           </div>
+          <p class="mini-note" id="compareContribNote" style="margin: 0 0 12px;"></p>
           <div class="compare-grid">
             <div class="offer-card compare-region-block hidden" data-compare-offer="offerA" data-compare-region="shenzhen">
               <h3>Offer A</h3>
@@ -1139,7 +1282,7 @@
           </div>
         </section>
 
-        <section class="panel-section compare-only hidden" id="compareHkParamsSection">
+        <section class="panel-section compare-only tax-only hidden" id="compareHkParamsSection">
           <div class="section-title">
             <h2>Hong Kong parameters (per offer)</h2>
           </div>
@@ -1213,7 +1356,7 @@
           </div>
         </section>
 
-        <section class="panel-section single-only">
+        <section class="panel-section single-only tax-only" id="incomeSection">
           <div class="section-title">
             <h2>Income</h2>
           </div>
@@ -1262,7 +1405,7 @@
           </div>
         </section>
 
-        <section class="panel-section shenzhen-tax-only">
+        <section class="panel-section shenzhen-tax-only tax-only">
           <div class="section-title">
             <h2>Individual income tax</h2>
           </div>
@@ -1286,10 +1429,11 @@
           </div>
         </section>
 
-        <section class="panel-section single-contrib-only">
+        <section class="panel-section single-contrib-only tax-only">
           <div class="section-title">
-            <h2>Shenzhen social insurance & housing fund</h2>
+            <h2>Social insurance & housing fund</h2>
           </div>
+          <p class="mini-note" id="singleContribNote" style="margin: 0 0 12px;"></p>
           <div class="table-wrap">
             <table class="rate-table">
               <thead>
@@ -1306,7 +1450,7 @@
           </div>
         </section>
 
-        <section class="panel-section single-hk-only hidden">
+        <section class="panel-section single-hk-only tax-only hidden">
           <div class="section-title">
             <h2>Hong Kong parameters</h2>
           </div>
@@ -1341,10 +1485,153 @@
             </div>
           </div>
         </section>
+
+        <section class="panel-section rate-only single-only hidden" id="rateSingleSection">
+          <div class="section-title">
+            <h2>Salary &amp; schedule</h2>
+          </div>
+          <div class="field-grid">
+            <div class="field wide">
+              <label for="rateInputCurrency">Income currency</label>
+              <select id="rateInputCurrency">
+                <option value="cny" selected>CNY</option>
+                <option value="hkd">HKD</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="rateGrossAnnual">Pre-tax annual salary</label>
+              <input id="rateGrossAnnual" type="number" min="0" step="1000" value="500000">
+            </div>
+            <div class="field">
+              <label for="rateNetAnnual">Post-tax annual salary</label>
+              <input id="rateNetAnnual" type="number" min="0" step="1000" value="400000">
+            </div>
+            <div class="mini-note wide" id="rateInputCurrencyNote"></div>
+            <div class="field wide rate-exchange-only hidden">
+              <label for="rateHkdToCny">HKD/CNY exchange rate (editable)</label>
+              <input id="rateHkdToCny" type="number" min="0" step="0.0001" value="0.86">
+            </div>
+            <div class="field wide">
+              <label for="rateScheduleMode">Work schedule</label>
+              <select id="rateScheduleMode" data-rate-schedule-mode="">
+                <option value="uniform">Same every weekday</option>
+                <option value="perday">Set each weekday</option>
+              </select>
+            </div>
+            <div class="field wide rate-uniform-schedule">
+              <span class="day-label" data-i18n-rate="label.rateWorkHours">Mon–Fri work hours</span>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="rateWorkStart">Start</label>
+                  <input id="rateWorkStart" type="time" value="09:00">
+                </div>
+                <div class="field">
+                  <label for="rateWorkEnd">End</label>
+                  <input id="rateWorkEnd" type="time" value="20:30">
+                </div>
+              </div>
+            </div>
+            <div class="field wide rate-perday-schedule hidden">
+              <span class="day-label" data-i18n-rate="label.rateWorkHours">Mon–Fri work hours</span>
+              <div class="schedule-grid" id="ratePerDaySchedule"></div>
+            </div>
+            <div class="field">
+              <label for="rateVacationDays">Paid vacation days</label>
+              <input id="rateVacationDays" type="number" min="0" step="1" value="5">
+            </div>
+            <div class="field">
+              <label for="ratePublicHolidays">Public holidays</label>
+              <input id="ratePublicHolidays" type="number" min="0" step="1" value="13">
+            </div>
+            <div class="field">
+              <label for="rateOvertimeDays">Extra overtime days</label>
+              <input id="rateOvertimeDays" type="number" min="0" step="1" value="0">
+            </div>
+            <div class="field wide">
+              <span class="day-label" data-i18n-rate="label.rateOvertimeHours">Overtime daily hours</span>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="rateOvertimeStart">Start</label>
+                  <input id="rateOvertimeStart" type="time" value="08:00">
+                </div>
+                <div class="field">
+                  <label for="rateOvertimeEnd">End</label>
+                  <input id="rateOvertimeEnd" type="time" value="17:30">
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label for="rateCommuteMinutes">One-way commute (min)</label>
+              <input id="rateCommuteMinutes" type="number" min="0" step="1" value="0">
+            </div>
+            <div class="field">
+              <label for="rateLunchMinutes">Lunch / break (min)</label>
+              <input id="rateLunchMinutes" type="number" min="0" step="1" value="0">
+            </div>
+            <div class="field wide">
+              <div class="toggle-row">
+                <label class="toggle-label" for="rateIncludeCommute">Include commute time</label>
+                <div class="toggle-switch">
+                  <input id="rateIncludeCommute" type="checkbox">
+                  <span class="toggle-slider" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+            <div class="field wide">
+              <div class="toggle-row">
+                <label class="toggle-label" for="rateDeductLunch">Deduct lunch / break</label>
+                <div class="toggle-switch">
+                  <input id="rateDeductLunch" type="checkbox">
+                  <span class="toggle-slider" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-section rate-only compare-only hidden" id="rateCompareSection">
+          <div class="section-title">
+            <h2>Compare schedules</h2>
+          </div>
+          <div class="compare-grid">
+            <div class="offer-card">
+              <h3 data-i18n-rate="compare.offerATitle">Offer A</h3>
+              <div class="field-grid rate-offer-fields" data-rate-offer="rateOfferA"></div>
+            </div>
+            <div class="offer-card">
+              <h3 data-i18n-rate="compare.offerBTitle">Offer B</h3>
+              <div class="field-grid rate-offer-fields" data-rate-offer="rateOfferB"></div>
+            </div>
+          </div>
+          <div class="rate-compare-adjustments" style="margin-top: 12px;">
+            <div class="field wide">
+              <div class="toggle-row">
+                <label class="toggle-label" for="rateCompareIncludeCommute">Include commute time (both offers)</label>
+                <div class="toggle-switch">
+                  <input id="rateCompareIncludeCommute" type="checkbox">
+                  <span class="toggle-slider" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+            <div class="field wide">
+              <div class="toggle-row">
+                <label class="toggle-label" for="rateCompareDeductLunch">Deduct lunch / break (both offers)</label>
+                <div class="toggle-switch">
+                  <input id="rateCompareDeductLunch" type="checkbox">
+                  <span class="toggle-slider" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field wide rate-compare-exchange hidden" style="margin-top: 12px;">
+            <label for="rateCompareHkdToCny">HKD/CNY exchange rate (editable)</label>
+            <input id="rateCompareHkdToCny" type="number" min="0" step="0.0001" value="0.86">
+          </div>
+        </section>
       </form>
 
       <section class="results">
-        <section class="panel compare-only hidden" id="comparePanel">
+        <section class="panel compare-only tax-only hidden" id="comparePanel">
           <div class="panel-heading">
             <h2>Compare Offers</h2>
             <div class="mini-note" id="compareNote">All figures converted to CNY for cross-region comparison</div>
@@ -1366,11 +1653,42 @@
           <div class="compare-cards" id="compareCards"></div>
         </section>
 
-        <section class="panel single-only">
+        <section class="panel single-only tax-only">
           <div class="summary-grid" id="summaryGrid"></div>
         </section>
 
-        <section class="panel single-only">
+        <section class="panel rate-only single-only hidden" id="rateResultsPanel">
+          <div class="panel-heading">
+            <h2>Daily / hourly rates</h2>
+            <div class="mini-note" id="rateResultsNote"></div>
+          </div>
+          <div class="rate-variant-panel" id="rateBaseResults"></div>
+          <div id="rateVariantResults"></div>
+        </section>
+
+        <section class="panel rate-only compare-only hidden" id="rateComparePanel">
+          <div class="panel-heading">
+            <h2>Compare daily / hourly</h2>
+            <div class="mini-note" id="rateCompareNote"></div>
+          </div>
+          <div class="compare-summary-grid" id="rateCompareSummaryGrid"></div>
+          <div class="table-wrap compare-table-wrap">
+            <table class="result-table compare-table">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th id="rateCompareHeaderA">Offer A</th>
+                  <th id="rateCompareHeaderB">Offer B</th>
+                  <th>Diff (B−A)</th>
+                </tr>
+              </thead>
+              <tbody id="rateCompareRows"></tbody>
+            </table>
+          </div>
+          <div class="compare-cards" id="rateCompareCards"></div>
+        </section>
+
+        <section class="panel single-only tax-only" id="monthlyPanel">
           <div class="panel-heading">
             <h2>Monthly breakdown</h2>
             <div class="mini-note" id="monthlyNote"></div>
@@ -1392,7 +1710,7 @@
           </div>
         </section>
 
-        <section class="panel single-only">
+        <section class="panel single-only tax-only" id="contribPanel">
           <div class="panel-heading">
             <h2>Contribution breakdown</h2>
             <div class="mini-note" id="bonusNote"></div>
@@ -1437,16 +1755,17 @@
         "section.compareOffers": "Compare Offers",
         "section.income": "Income",
         "section.tax": "Individual income tax",
-        "section.shenzhenContrib": "Shenzhen social insurance & housing fund",
-        "section.shenzhenContribCompare": "Shenzhen social insurance & housing fund (per offer)",
+        "section.shenzhenContrib": "Social insurance & housing fund",
+        "section.shenzhenContribCompare": "Social insurance & housing fund (per offer)",
         "section.hkParams": "Hong Kong parameters",
         "section.hkParamsCompare": "Hong Kong parameters (per offer)",
         "section.monthly": "Monthly breakdown",
         "section.contribBreakdown": "Contribution breakdown",
         "mode.single": "Single",
         "mode.compare": "Compare Offers",
-        "region.shenzhen": "Shenzhen",
+        "region.shenzhen": "Mainland China",
         "region.hongkong": "Hong Kong",
+        "note.mainlandContribDefault": "Default contribution rate caps reference Shenzhen",
         "label.incomeCurrency": "Income currency",
         "label.monthlyBase": "Monthly base",
         "label.monthlySubsidy": "Monthly other allowance",
@@ -1491,6 +1810,9 @@
         "table.employerMonthly": "Employer monthly",
         "compare.metric": "Metric",
         "compare.diff": "Diff (B−A)",
+        "compare.diffHeader": "Diff / Change",
+        "compare.diffPct": "{diff} · {pct}",
+        "compare.pctNew": "new",
         "compare.noteCross": "15 metrics in CNY · 1 HKD = {rate} CNY · incl. employer cost & contributions · {source}",
         "compare.noteCrossShort": "15 metrics · CNY · incl. employer cost",
         "compare.noteSame": "15 metrics in CNY · incl. employer cost & contributions",
@@ -1500,6 +1822,8 @@
         "compare.sectionEmployer": "Employer contributions (annual)",
         "compare.offerA": "Offer A ({region})",
         "compare.offerB": "Offer B ({region})",
+        "compare.offerATitle": "Offer A",
+        "compare.offerBTitle": "Offer B",
         "compare.shortA": "A · {region}",
         "compare.shortB": "B · {region}",
         "compare.employeePrefix": "Employee · {name}",
@@ -1563,6 +1887,52 @@
         "note.compareSummary": "Offer A: {regionA} {amountA} net · Offer B: {regionB} {amountB} net",
         "pill.cnyCompare": "CNY compare",
         "pill.input": "Input {currency}",
+        "calcType.tax": "Tax / Net",
+        "calcType.rate": "Daily / Hourly",
+        "section.calcType": "Calculator",
+        "section.rateSalary": "Salary & schedule",
+        "section.rateCompare": "Compare schedules",
+        "section.rateResults": "Daily / hourly rates",
+        "section.rateCompareResults": "Compare daily / hourly",
+        "label.rateGrossAnnual": "Pre-tax annual salary",
+        "label.rateNetAnnual": "Post-tax annual salary",
+        "label.rateScheduleMode": "Work schedule",
+        "label.rateWorkHours": "Mon–Fri work hours",
+        "label.rateOvertimeStart": "Overtime start",
+        "label.rateOvertimeEnd": "Overtime end",
+        "label.rateWorkStart": "Start",
+        "label.rateWorkEnd": "End",
+        "label.rateVacationDays": "Paid vacation days",
+        "label.ratePublicHolidays": "Public holidays",
+        "label.rateOvertimeDays": "Extra overtime days",
+        "label.rateOvertimeHours": "Overtime daily hours",
+        "label.rateCommuteMinutes": "One-way commute (min)",
+        "label.rateLunchMinutes": "Lunch / break (min)",
+        "label.rateIncludeCommute": "Include commute time",
+        "label.rateDeductLunch": "Deduct lunch / break",
+        "scheduleMode.uniform": "Same every weekday",
+        "scheduleMode.perday": "Set each weekday",
+        "weekday.mon": "Mon",
+        "weekday.tue": "Tue",
+        "weekday.wed": "Wed",
+        "weekday.thu": "Thu",
+        "weekday.fri": "Fri",
+        "rate.variant.base": "Standard (no commute, no lunch deduction)",
+        "rate.variant.commute": "Standard (incl. commute)",
+        "rate.variant.lunch": "Standard (lunch deducted)",
+        "rate.variant.both": "Standard (incl. commute, lunch deducted)",
+        "label.rateCompareIncludeCommute": "Include commute time (both offers)",
+        "label.rateCompareDeductLunch": "Deduct lunch / break (both offers)",
+        "rate.metric.regularWorkDays": "Regular work days",
+        "rate.metric.totalWorkDays": "Total work days",
+        "rate.metric.totalHours": "Total work hours",
+        "rate.metric.grossDaily": "Pre-tax daily",
+        "rate.metric.netDaily": "Post-tax daily",
+        "rate.metric.grossHourly": "Pre-tax hourly",
+        "rate.metric.netHourly": "Post-tax hourly",
+        "rate.note.summary": "{days} work days · {hours} total hours",
+        "rate.note.compare": "Offer A: {dailyA} net/day · Offer B: {dailyB} net/day",
+        "rate.compare.note": "All figures in CNY · higher hourly = better · 1 HKD = {rate} CNY",
       },
       zh: {
         "app.title": "工资计算器",
@@ -1578,16 +1948,17 @@
         "section.compareOffers": "Offer 对比",
         "section.income": "收入",
         "section.tax": "个税",
-        "section.shenzhenContrib": "深圳五险一金",
-        "section.shenzhenContribCompare": "深圳五险一金（按 Offer 分别设置）",
+        "section.shenzhenContrib": "五险一金",
+        "section.shenzhenContribCompare": "五险一金（按 Offer 分别设置）",
         "section.hkParams": "香港参数",
         "section.hkParamsCompare": "香港参数（按 Offer 分别设置）",
         "section.monthly": "每月明细",
         "section.contribBreakdown": "缴纳明细",
         "mode.single": "单独计算",
         "mode.compare": "Offer 对比",
-        "region.shenzhen": "深圳",
+        "region.shenzhen": "中国大陆",
         "region.hongkong": "香港",
+        "note.mainlandContribDefault": "五险一金比例上限默认参考深圳",
         "label.incomeCurrency": "收入输入币种",
         "label.monthlyBase": "月 base",
         "label.monthlySubsidy": "月其他补贴",
@@ -1632,6 +2003,9 @@
         "table.employerMonthly": "公司月缴",
         "compare.metric": "指标",
         "compare.diff": "差额 (B-A)",
+        "compare.diffHeader": "差额 / 涨幅",
+        "compare.diffPct": "{diff} · {pct}",
+        "compare.pctNew": "新增",
         "compare.noteCross": "与单独计算相同的 15 项指标统一换算为 CNY · 1 HKD = {rate} CNY · 含雇主成本与五险一金/MPF 明细 · {source}",
         "compare.noteCrossShort": "15 项指标 CNY 对比 · 含雇主成本",
         "compare.noteSame": "与单独计算相同的 15 项指标统一换算为 CNY · 含雇主成本与五险一金明细",
@@ -1641,6 +2015,8 @@
         "compare.sectionEmployer": "公司缴纳明细（年）",
         "compare.offerA": "Offer A（{region}）",
         "compare.offerB": "Offer B（{region}）",
+        "compare.offerATitle": "Offer A",
+        "compare.offerBTitle": "Offer B",
         "compare.shortA": "A · {region}",
         "compare.shortB": "B · {region}",
         "compare.employeePrefix": "个人·{name}",
@@ -1704,6 +2080,51 @@
         "note.compareSummary": "Offer A: {regionA} {amountA} 到手 · Offer B: {regionB} {amountB} 到手",
         "pill.cnyCompare": "CNY 对比",
         "pill.input": "输入 {currency}",
+        "calcType.tax": "税前/税后",
+        "calcType.rate": "日薪/时薪",
+        "section.calcType": "计算器",
+        "section.rateSalary": "薪资与工时",
+        "section.rateCompare": "工时对比",
+        "section.rateResults": "日薪 / 时薪",
+        "section.rateCompareResults": "日薪 / 时薪对比",
+        "label.rateGrossAnnual": "税前年薪",
+        "label.rateNetAnnual": "税后年薪",
+        "label.rateScheduleMode": "工作时间",
+        "label.rateWorkHours": "周一至周五工作时间",
+        "label.rateOvertimeStart": "加班开始",
+        "label.rateOvertimeEnd": "加班结束",
+        "label.rateWorkStart": "开始",
+        "label.rateWorkEnd": "结束",
+        "label.rateVacationDays": "带薪年假（天）",
+        "label.ratePublicHolidays": "法定节假日（天）",
+        "label.rateOvertimeDays": "额外加班（天）",
+        "label.rateOvertimeHours": "加班每日工时",
+        "label.rateCommuteMinutes": "单程通勤（分钟）",
+        "label.rateLunchMinutes": "午休/吃饭（分钟）",
+        "label.rateIncludeCommute": "考虑通勤时间",
+        "label.rateDeductLunch": "扣除午休/吃饭",
+        "scheduleMode.uniform": "每天相同",
+        "scheduleMode.perday": "逐日设置",
+        "weekday.mon": "周一",
+        "weekday.tue": "周二",
+        "weekday.wed": "周三",
+        "weekday.thu": "周四",
+        "weekday.fri": "周五",
+        "rate.variant.base": "标准（不含通勤、不扣午休）",
+        "rate.variant.commute": "标准（含通勤）",
+        "rate.variant.lunch": "标准（扣除午休）",
+        "rate.variant.both": "标准（含通勤、扣除午休）",
+        "label.rateCompareIncludeCommute": "考虑通勤时间（两个 Offer 均适用）",
+        "label.rateCompareDeductLunch": "扣除午休/吃饭（两个 Offer 均适用）",
+        "rate.metric.totalWorkDays": "总工作日",
+        "rate.metric.totalHours": "总工时",
+        "rate.metric.grossDaily": "税前日薪",
+        "rate.metric.netDaily": "税后日薪",
+        "rate.metric.grossHourly": "税前时薪",
+        "rate.metric.netHourly": "税后时薪",
+        "rate.note.summary": "{days} 个工作日 · 总工时 {hours}",
+        "rate.note.compare": "Offer A: 税后日薪 {dailyA} · Offer B: 税后日薪 {dailyB}",
+        "rate.compare.note": "对比统一为 CNY · 时薪越高越好 · 1 HKD = {rate} CNY",
       },
     };
 
@@ -1884,7 +2305,7 @@
           ["table.item", "table.base", "table.employeeRate", "table.employeeMonthly", "table.employerRate", "table.employerMonthly"]
             .forEach((key, index) => { headers[index].textContent = t(key); });
         } else if (headers.length === 4 && row.closest(".compare-table")) {
-          ["compare.metric", null, null, "compare.diff"].forEach((key, index) => {
+          ["compare.metric", null, null, "compare.diffHeader"].forEach((key, index) => {
             if (key && headers[index]) headers[index].textContent = t(key);
           });
         }
@@ -1895,18 +2316,21 @@
       document.documentElement.lang = currentLang === "zh" ? "zh-CN" : "en";
       document.title = t("app.title");
       document.querySelector(".page-nav a")?.replaceChildren(t("nav.backTools"));
-      document.querySelector("#salaryForm .panel-section:nth-of-type(1) h2")?.replaceChildren(t("section.mode"));
-      document.querySelector(".panel-section.single-only .section-title h2")?.replaceChildren(t("section.region"));
-      document.querySelector(".panel-section.compare-only .section-title h2")?.replaceChildren(t("section.compareOffers"));
-      document.querySelector(".panel-section.single-only + .panel-section + .panel-section.single-only h2")?.replaceChildren(t("section.income"));
+      document.querySelector("#modeSection h2")?.replaceChildren(t("section.mode"));
+      document.querySelector("#regionSection h2")?.replaceChildren(t("section.region"));
+      document.querySelector("#compareOffersSection h2")?.replaceChildren(t("section.compareOffers"));
+      document.querySelector("#incomeSection h2")?.replaceChildren(t("section.income"));
       document.querySelector(".shenzhen-tax-only h2")?.replaceChildren(t("section.tax"));
       document.querySelector(".single-contrib-only h2")?.replaceChildren(t("section.shenzhenContrib"));
+      document.querySelector("#singleContribNote")?.replaceChildren(t("note.mainlandContribDefault"));
       document.querySelector(".single-hk-only h2")?.replaceChildren(t("section.hkParams"));
       document.querySelector("#compareShenzhenContribSection h2")?.replaceChildren(t("section.shenzhenContribCompare"));
+      document.querySelector("#compareContribNote")?.replaceChildren(t("note.mainlandContribDefault"));
       document.querySelector("#compareHkParamsSection h2")?.replaceChildren(t("section.hkParamsCompare"));
       document.querySelector("#comparePanel .panel-heading h2")?.replaceChildren(t("section.compareOffers"));
-      document.querySelector(".results .single-only .panel:nth-of-type(2) h2")?.replaceChildren(t("section.monthly"));
-      document.querySelector(".results .single-only .panel:nth-of-type(3) h2")?.replaceChildren(t("section.contribBreakdown"));
+      document.querySelector("#monthlyPanel h2")?.replaceChildren(t("section.monthly"));
+      document.querySelector("#contribPanel h2")?.replaceChildren(t("section.contribBreakdown"));
+      applyRateStaticLanguage();
 
       LABEL_FIELD_IDS.forEach((fieldId) => {
         const key = LABEL_KEY_BY_FIELD[fieldId];
@@ -2007,7 +2431,10 @@
     const state = {
       region: "shenzhen",
       mode: "single",
+      calculatorType: "tax",
     };
+
+    const RATE_WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"];
 
     const DEFAULT_HKD_TO_CNY = 0.86;
     const EXCHANGE_CACHE_KEY = "salary_calc_hkd_cny_cache";
@@ -2069,6 +2496,8 @@
       const text = formatRate(value);
       if (hkdToCnyInput) hkdToCnyInput.value = text;
       if (singleHkdToCnyInput) singleHkdToCnyInput.value = text;
+      if (document.querySelector("#rateHkdToCny")) document.querySelector("#rateHkdToCny").value = text;
+      if (document.querySelector("#rateCompareHkdToCny")) document.querySelector("#rateCompareHkdToCny").value = text;
     }
 
     function normalizeCachedExchangeRate(cached) {
@@ -2245,6 +2674,13 @@
     }
 
     function getHkdToCny() {
+      if (state.calculatorType === "rate") {
+        const input = state.mode === "compare"
+          ? document.querySelector("#rateCompareHkdToCny")
+          : document.querySelector("#rateHkdToCny");
+        const value = Number(input?.value);
+        if (Number.isFinite(value) && value > 0) return value;
+      }
       const input = state.mode === "compare" ? hkdToCnyInput : singleHkdToCnyInput;
       const value = Number(input?.value);
       return Number.isFinite(value) && value > 0 ? value : exchangeRateState.value || DEFAULT_HKD_TO_CNY;
@@ -2333,6 +2769,84 @@
       if (select) select.value = regionNativeCurrency(region);
     }
 
+    function getRateRegion(prefix = "") {
+      if (!prefix) return state.region;
+      return document.querySelector(`#${prefix}RateRegion`)?.value || "shenzhen";
+    }
+
+    function getRateInputCurrency(prefix = "") {
+      if (!prefix) {
+        return document.querySelector("#rateInputCurrency")?.value || regionNativeCurrency(state.region);
+      }
+      return document.querySelector(`#${prefix}RateInputCurrency`)?.value || regionNativeCurrency(getRateRegion(prefix));
+    }
+
+    function syncDefaultRateCurrency(prefix, region) {
+      if (!prefix) {
+        const select = document.querySelector("#rateInputCurrency");
+        if (select) select.value = regionNativeCurrency(region);
+        return;
+      }
+      const select = document.querySelector(`#${prefix}RateInputCurrency`);
+      if (select) select.value = regionNativeCurrency(region);
+    }
+
+    function updateRateSalaryLabels(prefix = "") {
+      const tag = currencyTag(getRateInputCurrency(prefix));
+      const grossId = rateFieldId(prefix, "grossAnnual");
+      const netId = rateFieldId(prefix, "netAnnual");
+      [grossId, netId].forEach((fieldId, index) => {
+        const label = document.querySelector(`label[for="${fieldId}"]`);
+        const key = index === 0 ? "label.rateGrossAnnual" : "label.rateNetAnnual";
+        if (label) label.textContent = `${t(key)} (${tag})`;
+      });
+    }
+
+    function updateRateInputCurrencyNote(prefix, region) {
+      const noteId = prefix ? `${prefix}RateCurrencyNote` : "rateInputCurrencyNote";
+      const note = document.querySelector(`#${noteId}`);
+      if (!note) return;
+      const inputCurrency = getRateInputCurrency(prefix);
+      const native = regionNativeCurrency(region);
+      const inputTag = currencyTag(inputCurrency);
+      const nativeTag = currencyTag(native);
+      if (inputCurrency === native) {
+        note.textContent = t("note.incomeNative", { currency: inputTag, region: regionLabel(region) });
+        return;
+      }
+      note.textContent = t("note.incomeConvert", {
+        input: inputTag,
+        native: nativeTag,
+        rate: formatRate(getHkdToCny()),
+      });
+    }
+
+    function needsRateExchangeForSingle() {
+      const native = regionNativeCurrency(state.region);
+      return state.region === "hongkong" || getRateInputCurrency("") !== native;
+    }
+
+    function needsRateExchangeForCompare() {
+      const regionA = getRateRegion("offerA");
+      const regionB = getRateRegion("offerB");
+      return regionA === "hongkong" || regionB === "hongkong"
+        || getRateInputCurrency("offerA") !== regionNativeCurrency(regionA)
+        || getRateInputCurrency("offerB") !== regionNativeCurrency(regionB);
+    }
+
+    function rateValuesToCny(values, region, hkdToCny) {
+      const rate = region === "hongkong" ? hkdToCny : 1;
+      return {
+        regularWorkDays: values.regularWorkDays,
+        totalWorkDays: values.totalWorkDays,
+        totalHours: values.totalHours,
+        grossDaily: values.grossDaily * rate,
+        netDaily: values.netDaily * rate,
+        grossHourly: values.grossHourly * rate,
+        netHourly: values.netHourly * rate,
+      };
+    }
+
     function moneyForRegion(value, region) {
       const currency = region === "hongkong" ? "HKD" : "CNY";
       return new Intl.NumberFormat("zh-CN", {
@@ -2350,6 +2864,43 @@
       }).format(value || 0);
     }
 
+    function formatComparePct(valueA, valueB) {
+      if (valueA === 0) {
+        return valueB === 0 ? "0%" : t("compare.pctNew");
+      }
+      const pct = ((valueB - valueA) / Math.abs(valueA)) * 100;
+      return `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
+    }
+
+    function formatCompareDiffText(diff, kind = "money") {
+      if (kind === "hours") {
+        return `${diff >= 0 ? "+" : "-"}${formatHoursValue(Math.abs(diff))}`;
+      }
+      if (kind === "count") {
+        return `${diff >= 0 ? "+" : ""}${Math.round(diff)}`;
+      }
+      return `${diff >= 0 ? "+" : ""}${cnyMoney(diff)}`;
+    }
+
+    function compareDeltaText(valueA, valueB, kind = "money") {
+      const diff = valueB - valueA;
+      return t("compare.diffPct", {
+        diff: formatCompareDiffText(diff, kind),
+        pct: formatComparePct(valueA, valueB),
+      });
+    }
+
+    function compareDeltaClass(valueA, valueB) {
+      const diff = valueB - valueA;
+      return diff > 0 ? "pos" : diff < 0 ? "neg" : "";
+    }
+
+    function compareKindForKey(key) {
+      if (key === "totalHours") return "hours";
+      if (key === "regularWorkDays" || key === "totalWorkDays") return "count";
+      return "money";
+    }
+
     function initContributionInputs() {
       renderContributionTable(shenzhenInputs, "single");
       renderContributionTable(document.querySelector("#shenzhenInputsOfferA"), "offerA");
@@ -2358,15 +2909,30 @@
 
     function renderContributionTable(container, offerKey) {
       if (!container) return;
-      container.innerHTML = contributionItems.map(([key, nameKey, employee, employer, cap]) => `
+      const saved = {};
+      container.querySelectorAll("input[data-contribution]").forEach((input) => {
+        saved[`${input.dataset.contribution}-${input.dataset.field}`] = input.value;
+      });
+      container.innerHTML = contributionItems.map(([key, nameKey, employee, employer, defaultCap]) => {
+        const capInput = defaultCap === null
+          ? `<input data-offer="${offerKey}" data-contribution="${key}" data-field="cap" type="number" min="0" step="100" value="" placeholder="${t("table.noCap")}">`
+          : `<input data-offer="${offerKey}" data-contribution="${key}" data-field="cap" type="number" min="0" step="100" value="${defaultCap}">`;
+        return `
         <tr>
           <td class="name-col">${t(nameKey)}</td>
           <td data-label="${t("table.base")}"><input data-offer="${offerKey}" data-contribution="${key}" data-field="base" type="number" min="0" step="100" value="" placeholder="${t("table.basePlaceholder")}"></td>
-          <td data-label="${t("table.cap")}">${cap ? plainMoney(cap) : t("table.noCap")}</td>
+          <td data-label="${t("table.cap")}">${capInput}</td>
           <td data-label="${t("table.employeePct")}"><input data-offer="${offerKey}" data-contribution="${key}" data-field="employeeRate" type="number" min="0" step="0.1" value="${employee}"></td>
           <td data-label="${t("table.employerPct")}"><input data-offer="${offerKey}" data-contribution="${key}" data-field="employerRate" type="number" min="0" step="0.1" value="${employer}"></td>
         </tr>
-      `).join("");
+      `;
+      }).join("");
+      container.querySelectorAll("input[data-contribution]").forEach((input) => {
+        const savedKey = `${input.dataset.contribution}-${input.dataset.field}`;
+        if (saved[savedKey] !== undefined && saved[savedKey] !== "") {
+          input.value = saved[savedKey];
+        }
+      });
     }
 
     function fieldId(baseId, offerKey = "single") {
@@ -2498,11 +3064,19 @@
       return `${(value * 100).toFixed(2)}%`;
     }
 
+    function readContributionCap(offerKey, key) {
+      const capInput = document.querySelector(`[data-offer="${offerKey}"][data-contribution="${key}"][data-field="cap"]`);
+      if (!capInput || capInput.value === "") return null;
+      const value = Number(capInput.value);
+      return Number.isFinite(value) && value > 0 ? value : null;
+    }
+
     function readShenzhenContributions(monthlyBase, offerKey = "single") {
-      return contributionItems.map(([key, nameKey, , , cap]) => {
+      return contributionItems.map(([key, nameKey, , , defaultCap]) => {
         const baseInput = document.querySelector(`[data-offer="${offerKey}"][data-contribution="${key}"][data-field="base"]`);
         const employeeInput = document.querySelector(`[data-offer="${offerKey}"][data-contribution="${key}"][data-field="employeeRate"]`);
         const employerInput = document.querySelector(`[data-offer="${offerKey}"][data-contribution="${key}"][data-field="employerRate"]`);
+        const cap = readContributionCap(offerKey, key);
         const requestedBase = Number(baseInput.value) > 0 ? Number(baseInput.value) : monthlyBase;
         const base = cap ? Math.min(requestedBase, cap) : requestedBase;
         const employeeRate = (Number(employeeInput.value) || 0) / 100;
@@ -2820,7 +3394,7 @@
                 <strong>${cnyMoney(valueB)}</strong>
               </div>
             </div>
-            <div class="metric-diff ${diffClass}">${t("compare.diffLabel", { amount: `${diff >= 0 ? "+" : ""}${cnyMoney(diff)}` })}</div>
+            <div class="metric-diff ${compareDeltaClass(valueA, valueB)}">${compareDeltaText(valueA, valueB)}</div>
           </div>
         `;
       }).join("");
@@ -2836,11 +3410,10 @@
       `;
     }
 
-    function renderCompareMetricCard(label, valueA, valueB, diff, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB) {
+    function renderCompareMetricCard(label, valueA, valueB, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB) {
       const nativeA = resultA.region === "hongkong" ? valueA / hkdToCny : valueA;
       const nativeB = resultB.region === "hongkong" ? valueB / hkdToCny : valueB;
-      const diffText = `${diff >= 0 ? "+" : ""}${cnyMoney(diff)}`;
-      const diffClass = diff > 0 ? "diff-pos" : diff < 0 ? "diff-neg" : "";
+      const diffClass = compareDeltaClass(valueA, valueB) ? `diff-${compareDeltaClass(valueA, valueB)}` : "";
       return `
         <div class="compare-metric-card">
           <div class="compare-metric-label">${label}</div>
@@ -2856,7 +3429,7 @@
               <span class="cny-note">${moneyForRegion(nativeB, resultB.region)}</span>
             </div>
           </div>
-          <div class="compare-diff ${diffClass}">${t("compare.diffLabel", { amount: diffText })}</div>
+          <div class="compare-diff ${diffClass}">${compareDeltaText(valueA, valueB)}</div>
         </div>
       `;
     }
@@ -2928,11 +3501,11 @@
               <td>${row.label}</td>
               ${renderCompareCell(valueA, resultA, hkdToCny, classA)}
               ${renderCompareCell(valueB, resultB, hkdToCny, classB)}
-              <td>${diff >= 0 ? "+" : ""}${cnyMoney(diff)}</td>
+              <td class="${compareDeltaClass(valueA, valueB)}">${compareDeltaText(valueA, valueB)}</td>
             </tr>
           `;
           cardsHtml += renderCompareMetricCard(
-            row.label, valueA, valueB, diff, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB,
+            row.label, valueA, valueB, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB,
           );
         }
         cardsHtml += `</div>`;
@@ -2953,11 +3526,11 @@
             <td>${t("compare.employeePrefix", { name })}</td>
             ${renderCompareCell(valueA, resultA, hkdToCny, classA)}
             ${renderCompareCell(valueB, resultB, hkdToCny, classB)}
-            <td>${diff >= 0 ? "+" : ""}${cnyMoney(diff)}</td>
+            <td class="${compareDeltaClass(valueA, valueB)}">${compareDeltaText(valueA, valueB)}</td>
           </tr>
         `;
         cardsHtml += renderCompareMetricCard(
-          t("compare.employeePrefix", { name }), valueA, valueB, diff, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB,
+          t("compare.employeePrefix", { name }), valueA, valueB, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB,
         );
       }
       cardsHtml += `</div>`;
@@ -2977,11 +3550,11 @@
             <td>${t("compare.employerPrefix", { name })}</td>
             ${renderCompareCell(valueA, resultA, hkdToCny, classA)}
             ${renderCompareCell(valueB, resultB, hkdToCny, classB)}
-            <td>${diff >= 0 ? "+" : ""}${cnyMoney(diff)}</td>
+            <td class="${compareDeltaClass(valueA, valueB)}">${compareDeltaText(valueA, valueB)}</td>
           </tr>
         `;
         cardsHtml += renderCompareMetricCard(
-          t("compare.employerPrefix", { name }), valueA, valueB, diff, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB,
+          t("compare.employerPrefix", { name }), valueA, valueB, resultA, resultB, hkdToCny, classA, classB, shortLabelA, shortLabelB,
         );
       }
       cardsHtml += `</div>`;
@@ -3022,21 +3595,663 @@
       syncOfferBonusInputs("offerB");
     }
 
+    function syncBonusInputs() {
+      syncOfferBonusInputs("");
+      syncOfferBonusInputs("offerA");
+      syncOfferBonusInputs("offerB");
+    }
+
+    function rateFieldId(prefix, name) {
+      return prefix ? `${prefix}${name.charAt(0).toUpperCase()}${name.slice(1)}` : `rate${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+    }
+
+    function parseTimeToMinutes(timeStr) {
+      if (!timeStr) return 0;
+      const [hours, minutes] = timeStr.split(":").map(Number);
+      return hours * 60 + (minutes || 0);
+    }
+
+    function hoursBetweenStartEnd(startStr, endStr) {
+      let start = parseTimeToMinutes(startStr);
+      let end = parseTimeToMinutes(endStr);
+      if (end <= start) end += 24 * 60;
+      return (end - start) / 60;
+    }
+
+    function formatHoursValue(hours) {
+      if (!Number.isFinite(hours) || hours <= 0) return "0h";
+      const totalMinutes = Math.round(hours * 60);
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      if (m === 0) return `${h}h`;
+      return `${h}h ${m}m`;
+    }
+
+    function readDailyHours(prefix, scheduleMode) {
+      if (scheduleMode === "uniform") {
+        const start = document.querySelector(`#${rateFieldId(prefix, "workStart")}`)?.value || "09:00";
+        const end = document.querySelector(`#${rateFieldId(prefix, "workEnd")}`)?.value || "20:30";
+        const hours = hoursBetweenStartEnd(start, end);
+        return RATE_WEEKDAYS.map(() => hours);
+      }
+      return RATE_WEEKDAYS.map((day) => {
+        const dayKey = day.charAt(0).toUpperCase() + day.slice(1);
+        const start = document.querySelector(`#${rateFieldId(prefix, `${dayKey}Start`)}`)?.value || "09:00";
+        const end = document.querySelector(`#${rateFieldId(prefix, `${dayKey}End`)}`)?.value || "20:30";
+        return hoursBetweenStartEnd(start, end);
+      });
+    }
+
+    function readRateInputs(prefix = "") {
+      const region = getRateRegion(prefix);
+      const inputCurrency = getRateInputCurrency(prefix);
+      const hkdToCny = getHkdToCny();
+      const scheduleMode = document.querySelector(`#${rateFieldId(prefix, "scheduleMode")}`)?.value || "uniform";
+      const dailyHours = readDailyHours(prefix, scheduleMode);
+      const overtimeStart = document.querySelector(`#${rateFieldId(prefix, "overtimeStart")}`)?.value || "08:00";
+      const overtimeEnd = document.querySelector(`#${rateFieldId(prefix, "overtimeEnd")}`)?.value || "17:30";
+      const grossRaw = Number(document.querySelector(`#${rateFieldId(prefix, "grossAnnual")}`)?.value) || 0;
+      const netRaw = Number(document.querySelector(`#${rateFieldId(prefix, "netAnnual")}`)?.value) || 0;
+      return {
+        region,
+        inputCurrency,
+        grossAnnual: convertToNativeCurrency(grossRaw, inputCurrency, region, hkdToCny),
+        netAnnual: convertToNativeCurrency(netRaw, inputCurrency, region, hkdToCny),
+        dailyHours,
+        vacationDays: Number(document.querySelector(`#${rateFieldId(prefix, "vacationDays")}`)?.value) || 0,
+        overtimeDays: Number(document.querySelector(`#${rateFieldId(prefix, "overtimeDays")}`)?.value) || 0,
+        overtimeDailyHours: hoursBetweenStartEnd(overtimeStart, overtimeEnd),
+        publicHolidays: Number(document.querySelector(`#${rateFieldId(prefix, "publicHolidays")}`)?.value) || 0,
+        commuteMinutes: Number(document.querySelector(`#${rateFieldId(prefix, "commuteMinutes")}`)?.value) || 0,
+        lunchMinutes: Number(document.querySelector(`#${rateFieldId(prefix, "lunchMinutes")}`)?.value) || 0,
+        includeCommute: state.calculatorType === "rate" && state.mode === "compare" && prefix
+          ? readRateCompareAdjustments().includeCommute
+          : Boolean(document.querySelector(`#${rateFieldId(prefix, "includeCommute")}`)?.checked),
+        deductLunch: state.calculatorType === "rate" && state.mode === "compare" && prefix
+          ? readRateCompareAdjustments().deductLunch
+          : Boolean(document.querySelector(`#${rateFieldId(prefix, "deductLunch")}`)?.checked),
+        scheduleMode,
+      };
+    }
+
+    function computeRateCore(input) {
+      const weeklyHours = input.dailyHours.reduce((sum, hours) => sum + hours, 0);
+      const avgDailyHours = weeklyHours / RATE_WEEKDAYS.length;
+      const regularWorkDays = Math.max(0, 52 * 5 - input.vacationDays - input.publicHolidays);
+      const regularHours = Math.max(0, weeklyHours * 52 - input.vacationDays * avgDailyHours - input.publicHolidays * avgDailyHours);
+      const overtimeHours = input.overtimeDays * input.overtimeDailyHours;
+      const totalWorkDays = regularWorkDays + input.overtimeDays;
+      const totalHours = regularHours + overtimeHours;
+      const allWorkDays = totalWorkDays;
+      const commuteHours = (input.commuteMinutes * 2) / 60;
+      const lunchHours = input.lunchMinutes / 60;
+
+      function adjustedHours(variant) {
+        let hours = totalHours;
+        if (variant === "commute" || variant === "both") {
+          hours += allWorkDays * commuteHours;
+        }
+        if (variant === "lunch" || variant === "both") {
+          hours -= allWorkDays * lunchHours;
+        }
+        return Math.max(0, hours);
+      }
+
+      function ratesForVariant(variant) {
+        const hours = adjustedHours(variant);
+        const safeDays = totalWorkDays > 0 ? totalWorkDays : 1;
+        const safeHours = hours > 0 ? hours : 1;
+        return {
+          variant,
+          totalHours: hours,
+          grossDaily: input.grossAnnual / safeDays,
+          netDaily: input.netAnnual / safeDays,
+          grossHourly: input.grossAnnual / safeHours,
+          netHourly: input.netAnnual / safeHours,
+        };
+      }
+
+      return {
+        regularWorkDays,
+        totalWorkDays,
+        totalHours,
+        avgDailyHours,
+        weeklyHours,
+        variants: {
+          base: ratesForVariant("base"),
+          commute: ratesForVariant("commute"),
+          lunch: ratesForVariant("lunch"),
+          both: ratesForVariant("both"),
+        },
+      };
+    }
+
+    function readRateCompareAdjustments() {
+      return {
+        includeCommute: Boolean(document.querySelector("#rateCompareIncludeCommute")?.checked),
+        deductLunch: Boolean(document.querySelector("#rateCompareDeductLunch")?.checked),
+      };
+    }
+
+    function resolveRateVariantKey(includeCommute, deductLunch) {
+      if (includeCommute && deductLunch) return "both";
+      if (includeCommute) return "commute";
+      if (deductLunch) return "lunch";
+      return "base";
+    }
+
+    function resolveRateVariant(includeCommute, deductLunch) {
+      const key = resolveRateVariantKey(includeCommute, deductLunch);
+      return { key, labelKey: `rate.variant.${key}` };
+    }
+
+    function renderRateMetricCards(metrics, region, hkdToCny) {
+      const moneyFields = ["grossDaily", "netDaily", "grossHourly", "netHourly"];
+      const items = [
+        { labelKey: "rate.metric.regularWorkDays", value: String(metrics.regularWorkDays), isMoney: false },
+        { labelKey: "rate.metric.totalWorkDays", value: String(metrics.totalWorkDays), isMoney: false },
+        { labelKey: "rate.metric.totalHours", value: formatHoursValue(metrics.totalHours), isMoney: false },
+        { labelKey: "rate.metric.grossDaily", value: metrics.grossDaily, isMoney: true },
+        { labelKey: "rate.metric.netDaily", value: metrics.netDaily, isMoney: true },
+        { labelKey: "rate.metric.grossHourly", value: metrics.grossHourly, isMoney: true },
+        { labelKey: "rate.metric.netHourly", value: metrics.netHourly, isMoney: true, accent: true },
+      ];
+      return items.map((item) => {
+        const display = item.isMoney ? moneyForRegion(item.value, region) : item.value;
+        const cnyNote = item.isMoney && region === "hongkong"
+          ? `<span class="cny-note">≈ ${cnyMoney(item.value * hkdToCny)}</span>`
+          : "";
+        return `
+        <div class="metric ${item.accent ? "accent" : ""} ${item.isMoney ? "sub" : ""}">
+          <span>${t(item.labelKey)}</span>
+          <strong>${display}</strong>
+          ${cnyNote}
+        </div>
+      `;
+      }).join("");
+    }
+
+    function renderRateVariantBlock(labelKey, core, variantKey, region, hkdToCny) {
+      const variant = core.variants[variantKey];
+      const note = variantKey === "base"
+        ? t("rate.note.summary", {
+          days: core.totalWorkDays,
+          hours: formatHoursValue(core.totalHours),
+        })
+        : t("rate.note.summary", {
+          days: core.totalWorkDays,
+          hours: formatHoursValue(variant.totalHours),
+        });
+      return `
+        <div class="rate-variant-panel">
+          <h3>${t(labelKey)}</h3>
+          <p class="rate-variant-note">${note}</p>
+          <div class="rate-summary-grid">
+            ${renderRateMetricCards({
+              regularWorkDays: core.regularWorkDays,
+              totalWorkDays: core.totalWorkDays,
+              totalHours: variant.totalHours,
+              grossDaily: variant.grossDaily,
+              netDaily: variant.netDaily,
+              grossHourly: variant.grossHourly,
+              netHourly: variant.netHourly,
+            }, region, hkdToCny)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRateSingle() {
+      const input = readRateInputs("");
+      const core = computeRateCore(input);
+      const hkdToCny = getHkdToCny();
+      const variant = resolveRateVariant(input.includeCommute, input.deductLunch);
+
+      document.querySelector("#rateResultsNote").textContent = t("rate.note.summary", {
+        days: core.totalWorkDays,
+        hours: formatHoursValue(core.variants[variant.key].totalHours),
+      });
+      document.querySelector("#rateBaseResults").innerHTML = renderRateVariantBlock(
+        variant.labelKey, core, variant.key, input.region, hkdToCny,
+      );
+      document.querySelector("#rateVariantResults").innerHTML = "";
+    }
+
+    const RATE_COMPARE_SPECS = [
+      { key: "regularWorkDays", labelKey: "rate.metric.regularWorkDays", higherIsBetter: true, format: (v) => String(Math.round(v)) },
+      { key: "totalWorkDays", labelKey: "rate.metric.totalWorkDays", higherIsBetter: true, format: (v) => String(Math.round(v)) },
+      { key: "totalHours", labelKey: "rate.metric.totalHours", higherIsBetter: false, format: (v) => formatHoursValue(v) },
+      { key: "grossDaily", labelKey: "rate.metric.grossDaily", higherIsBetter: true, format: (v) => cnyMoney(v) },
+      { key: "netDaily", labelKey: "rate.metric.netDaily", higherIsBetter: true, format: (v) => cnyMoney(v) },
+      { key: "grossHourly", labelKey: "rate.metric.grossHourly", higherIsBetter: true, format: (v) => cnyMoney(v) },
+      { key: "netHourly", labelKey: "rate.metric.netHourly", higherIsBetter: true, format: (v) => cnyMoney(v) },
+    ];
+
+    function getRateCompareValues(core, variantKey = "base") {
+      const variant = core.variants[variantKey];
+      return {
+        regularWorkDays: core.regularWorkDays,
+        totalWorkDays: core.totalWorkDays,
+        totalHours: variant.totalHours,
+        grossDaily: variant.grossDaily,
+        netDaily: variant.netDaily,
+        grossHourly: variant.grossHourly,
+        netHourly: variant.netHourly,
+      };
+    }
+
+    function renderRateCompareCell(valueCny, nativeValue, region, cssClass, spec) {
+      if (compareKindForKey(spec.key) !== "money") {
+        return `<td class="${cssClass}">${spec.format(valueCny)}</td>`;
+      }
+      return `
+        <td class="${cssClass}">
+          ${cnyMoney(valueCny)}
+          <span class="cny-note">${moneyForRegion(nativeValue, region)}</span>
+        </td>
+      `;
+    }
+
+    function renderRateComparison() {
+      const hkdToCny = getHkdToCny();
+      const inputA = readRateInputs("offerA");
+      const inputB = readRateInputs("offerB");
+      const coreA = computeRateCore(inputA);
+      const coreB = computeRateCore(inputB);
+      const labelA = t("compare.offerA", { region: regionLabel(inputA.region) });
+      const labelB = t("compare.offerB", { region: regionLabel(inputB.region) });
+      const shortLabelA = t("compare.shortA", { region: regionLabel(inputA.region) });
+      const shortLabelB = t("compare.shortB", { region: regionLabel(inputB.region) });
+      document.querySelector("#rateCompareHeaderA").textContent = labelA;
+      document.querySelector("#rateCompareHeaderB").textContent = labelB;
+      document.querySelector("#rateCompareNote").textContent = t("rate.compare.note", { rate: formatRate(hkdToCny) });
+
+      const adjustments = readRateCompareAdjustments();
+      const variant = resolveRateVariant(adjustments.includeCommute, adjustments.deductLunch);
+      const variantKey = variant.key;
+
+      const sections = [{
+        title: t(variant.labelKey),
+        variantKey,
+        rows: RATE_COMPARE_SPECS,
+      }];
+
+      const nativeA = { [variantKey]: getRateCompareValues(coreA, variantKey) };
+      const nativeB = { [variantKey]: getRateCompareValues(coreB, variantKey) };
+      const valuesA = { [variantKey]: rateValuesToCny(nativeA[variantKey], inputA.region, hkdToCny) };
+      const valuesB = { [variantKey]: rateValuesToCny(nativeB[variantKey], inputB.region, hkdToCny) };
+
+      const compareClass = (self, other, higherIsBetter) => {
+        if (self === other) return "";
+        const wins = higherIsBetter ? self > other : self < other;
+        return wins ? "better" : "worse";
+      };
+
+      document.querySelector("#rateCompareSummaryGrid").innerHTML = RATE_COMPARE_SPECS.slice(3).map((spec) => {
+        const valueA = valuesA[variantKey][spec.key];
+        const valueB = valuesB[variantKey][spec.key];
+        const classA = compareClass(valueA, valueB, spec.higherIsBetter);
+        const classB = compareClass(valueB, valueA, spec.higherIsBetter);
+        const displayA = compareKindForKey(spec.key) === "money"
+          ? `${cnyMoney(valueA)}<span class="cny-note">${moneyForRegion(nativeA[variantKey][spec.key], inputA.region)}</span>`
+          : spec.format(valueA);
+        const displayB = compareKindForKey(spec.key) === "money"
+          ? `${cnyMoney(valueB)}<span class="cny-note">${moneyForRegion(nativeB[variantKey][spec.key], inputB.region)}</span>`
+          : spec.format(valueB);
+        return `
+          <div class="compare-summary-card accent">
+            <span class="metric-name">${t(spec.labelKey)}</span>
+            <div class="compare-metric-grid">
+              <div class="compare-offer ${classA}">
+                <span class="compare-offer-name">${shortLabelA}</span>
+                <strong>${displayA}</strong>
+              </div>
+              <div class="compare-offer ${classB}">
+                <span class="compare-offer-name">${shortLabelB}</span>
+                <strong>${displayB}</strong>
+              </div>
+            </div>
+            <div class="metric-diff ${compareDeltaClass(valueA, valueB)}">${compareDeltaText(valueA, valueB, compareKindForKey(spec.key))}</div>
+          </div>
+        `;
+      }).join("");
+
+      document.querySelector("#rateCompareRows").innerHTML = sections.map((section) => {
+        const sectionRows = section.rows.map((spec) => {
+          const valueA = valuesA[section.variantKey][spec.key];
+          const valueB = valuesB[section.variantKey][spec.key];
+          const classA = compareClass(valueA, valueB, spec.higherIsBetter);
+          const classB = compareClass(valueB, valueA, spec.higherIsBetter);
+          return `
+            <tr>
+              <td>${t(spec.labelKey)}</td>
+              ${renderRateCompareCell(valueA, nativeA[section.variantKey][spec.key], inputA.region, classA, spec)}
+              ${renderRateCompareCell(valueB, nativeB[section.variantKey][spec.key], inputB.region, classB, spec)}
+              <td class="${compareDeltaClass(valueA, valueB)}">${compareDeltaText(valueA, valueB, compareKindForKey(spec.key))}</td>
+            </tr>
+          `;
+        }).join("");
+        return `
+          <tr class="compare-section"><td colspan="4">${section.title}</td></tr>
+          ${sectionRows}
+        `;
+      }).join("");
+
+      document.querySelector("#rateCompareCards").innerHTML = sections.flatMap((section) => section.rows.map((spec) => {
+        const valueA = valuesA[section.variantKey][spec.key];
+        const valueB = valuesB[section.variantKey][spec.key];
+        const classA = compareClass(valueA, valueB, spec.higherIsBetter);
+        const classB = compareClass(valueB, valueA, spec.higherIsBetter);
+        const diffClass = compareDeltaClass(valueA, valueB) ? `diff-${compareDeltaClass(valueA, valueB)}` : "";
+        const displayA = compareKindForKey(spec.key) === "money"
+          ? `${cnyMoney(valueA)}<span class="cny-note">${moneyForRegion(nativeA[section.variantKey][spec.key], inputA.region)}</span>`
+          : spec.format(valueA);
+        const displayB = compareKindForKey(spec.key) === "money"
+          ? `${cnyMoney(valueB)}<span class="cny-note">${moneyForRegion(nativeB[section.variantKey][spec.key], inputB.region)}</span>`
+          : spec.format(valueB);
+        return `
+          <div class="compare-metric-card">
+            <div class="compare-metric-label">${section.title} · ${t(spec.labelKey)}</div>
+            <div class="compare-metric-grid">
+              <div class="compare-offer ${classA}">
+                <span class="compare-offer-name">${shortLabelA}</span>
+                <strong>${displayA}</strong>
+              </div>
+              <div class="compare-offer ${classB}">
+                <span class="compare-offer-name">${shortLabelB}</span>
+                <strong>${displayB}</strong>
+              </div>
+            </div>
+            <div class="compare-diff ${diffClass}">${compareDeltaText(valueA, valueB, compareKindForKey(spec.key))}</div>
+          </div>
+        `;
+      })).join("");
+
+      document.querySelector("#bonusNote").textContent = t("rate.note.compare", {
+        dailyA: cnyMoney(valuesA[variantKey].netDaily),
+        dailyB: cnyMoney(valuesB[variantKey].netDaily),
+      });
+    }
+
+    function buildRateOfferFieldsHtml(prefix) {
+      const p = prefix;
+      const id = (name) => rateFieldId(p, name);
+      const perDayRows = RATE_WEEKDAYS.map((day) => {
+        const dayKey = day.charAt(0).toUpperCase() + day.slice(1);
+        return `
+          <div class="schedule-row">
+            <span class="day-label" data-weekday="${day}">${day}</span>
+            <input type="time" id="${id(`${dayKey}Start`)}" value="09:00">
+            <input type="time" id="${id(`${dayKey}End`)}" value="20:30">
+          </div>
+        `;
+      }).join("");
+      return `
+        <div class="field wide">
+          <label for="${id("rateRegion")}">Region</label>
+          <select id="${id("rateRegion")}" data-rate-region-select="${p}">
+            <option value="shenzhen">Mainland China</option>
+            <option value="hongkong">Hong Kong</option>
+          </select>
+        </div>
+        <div class="field wide">
+          <label for="${id("rateInputCurrency")}">Income currency</label>
+          <select id="${id("rateInputCurrency")}">
+            <option value="cny">CNY</option>
+            <option value="hkd">HKD</option>
+          </select>
+        </div>
+        <div class="mini-note wide" id="${p}RateCurrencyNote"></div>
+        <div class="field">
+          <label for="${id("grossAnnual")}">Pre-tax annual salary</label>
+          <input id="${id("grossAnnual")}" type="number" min="0" step="1000" value="500000">
+        </div>
+        <div class="field">
+          <label for="${id("netAnnual")}">Post-tax annual salary</label>
+          <input id="${id("netAnnual")}" type="number" min="0" step="1000" value="400000">
+        </div>
+        <div class="field wide">
+          <label for="${id("scheduleMode")}">Work schedule</label>
+          <select id="${id("scheduleMode")}" data-rate-schedule-mode="${p}">
+            <option value="uniform">Same every weekday</option>
+            <option value="perday">Set each weekday</option>
+          </select>
+        </div>
+        <div class="field wide rate-uniform-schedule" data-rate-uniform="${p}">
+          <span class="day-label" data-i18n-rate="label.rateWorkHours">Mon–Fri</span>
+          <div class="field-grid">
+            <div class="field">
+              <label for="${id("workStart")}">Start</label>
+              <input id="${id("workStart")}" type="time" value="09:00">
+            </div>
+            <div class="field">
+              <label for="${id("workEnd")}">End</label>
+              <input id="${id("workEnd")}" type="time" value="20:30">
+            </div>
+          </div>
+        </div>
+        <div class="field wide rate-perday-schedule hidden" data-rate-perday="${p}">
+          <span class="day-label" data-i18n-rate="label.rateWorkHours">Mon–Fri</span>
+          <div class="schedule-grid">${perDayRows}</div>
+        </div>
+        <div class="field">
+          <label for="${id("vacationDays")}">Paid vacation days</label>
+          <input id="${id("vacationDays")}" type="number" min="0" step="1" value="5">
+        </div>
+        <div class="field">
+          <label for="${id("publicHolidays")}">Public holidays</label>
+          <input id="${id("publicHolidays")}" type="number" min="0" step="1" value="13">
+        </div>
+        <div class="field">
+          <label for="${id("overtimeDays")}">Extra overtime days</label>
+          <input id="${id("overtimeDays")}" type="number" min="0" step="1" value="0">
+        </div>
+        <div class="field wide">
+          <span class="day-label" data-i18n-rate="label.rateOvertimeHours">Overtime daily hours</span>
+          <div class="field-grid">
+            <div class="field">
+              <label for="${id("overtimeStart")}">Overtime start</label>
+              <input id="${id("overtimeStart")}" type="time" value="08:00">
+            </div>
+            <div class="field">
+              <label for="${id("overtimeEnd")}">Overtime end</label>
+              <input id="${id("overtimeEnd")}" type="time" value="17:30">
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="${id("commuteMinutes")}">One-way commute (min)</label>
+          <input id="${id("commuteMinutes")}" type="number" min="0" step="1" value="0">
+        </div>
+        <div class="field">
+          <label for="${id("lunchMinutes")}">Lunch / break (min)</label>
+          <input id="${id("lunchMinutes")}" type="number" min="0" step="1" value="0">
+        </div>
+      `;
+    }
+
+    function initRatePerDaySchedule() {
+      const container = document.querySelector("#ratePerDaySchedule");
+      if (!container || container.childElementCount > 0) return;
+      container.innerHTML = RATE_WEEKDAYS.map((day) => {
+        const dayKey = day.charAt(0).toUpperCase() + day.slice(1);
+        return `
+          <div class="schedule-row">
+            <span class="day-label" data-weekday="${day}">${day}</span>
+            <input type="time" id="rate${dayKey}Start" value="09:00">
+            <input type="time" id="rate${dayKey}End" value="20:30">
+          </div>
+        `;
+      }).join("");
+    }
+
+    function initRateCompareFields() {
+      document.querySelectorAll(".rate-offer-fields").forEach((container) => {
+        if (container.childElementCount > 0) return;
+        const prefix = container.dataset.rateOffer === "rateOfferA" ? "offerA" : "offerB";
+        container.innerHTML = buildRateOfferFieldsHtml(prefix);
+        const regionSelect = document.querySelector(`#${prefix}RateRegion`);
+        if (regionSelect) regionSelect.value = prefix === "offerA" ? "shenzhen" : "hongkong";
+        syncDefaultRateCurrency(prefix, regionSelect?.value || "shenzhen");
+      });
+    }
+
+    function syncRateScheduleVisibility(prefix = "") {
+      const scheduleMode = document.querySelector(`#${rateFieldId(prefix, "scheduleMode")}`)?.value || "uniform";
+      const uniformBlocks = prefix
+        ? document.querySelectorAll(`[data-rate-uniform="${prefix}"]`)
+        : document.querySelectorAll("#rateSingleSection .rate-uniform-schedule");
+      const perdayBlocks = prefix
+        ? document.querySelectorAll(`[data-rate-perday="${prefix}"]`)
+        : document.querySelectorAll("#rateSingleSection .rate-perday-schedule");
+      uniformBlocks.forEach((node) => node.classList.toggle("hidden", scheduleMode === "perday"));
+      perdayBlocks.forEach((node) => node.classList.toggle("hidden", scheduleMode !== "perday"));
+    }
+
+    function applyRateStaticLanguage() {
+      document.querySelector("#calcTypeSection h2")?.replaceChildren(t("section.calcType"));
+      document.querySelector("#modeSection h2")?.replaceChildren(t("section.mode"));
+      document.querySelector("#rateSingleSection h2")?.replaceChildren(t("section.rateSalary"));
+      document.querySelector("#rateCompareSection h2")?.replaceChildren(t("section.rateCompare"));
+      document.querySelector("#rateResultsPanel .panel-heading h2")?.replaceChildren(t("section.rateResults"));
+      document.querySelector("#rateComparePanel .panel-heading h2")?.replaceChildren(t("section.rateCompareResults"));
+
+      document.querySelectorAll("[data-calc-type]").forEach((button) => {
+        button.textContent = t(`calcType.${button.dataset.calcType}`);
+      });
+
+      const rateFieldLabels = {
+        grossAnnual: "label.rateGrossAnnual",
+        netAnnual: "label.rateNetAnnual",
+        scheduleMode: "label.rateScheduleMode",
+        workStart: "label.rateWorkStart",
+        workEnd: "label.rateWorkEnd",
+        vacationDays: "label.rateVacationDays",
+        publicHolidays: "label.ratePublicHolidays",
+        overtimeDays: "label.rateOvertimeDays",
+        commuteMinutes: "label.rateCommuteMinutes",
+        lunchMinutes: "label.rateLunchMinutes",
+        includeCommute: "label.rateIncludeCommute",
+        deductLunch: "label.rateDeductLunch",
+        overtimeStart: "label.rateOvertimeStart",
+        overtimeEnd: "label.rateOvertimeEnd",
+        rateRegion: "section.region",
+        rateInputCurrency: "label.incomeCurrency",
+      };
+
+      document.querySelectorAll("[data-i18n-rate]").forEach((node) => {
+        node.textContent = t(node.dataset.i18nRate);
+      });
+
+      document.querySelector("label[for='rateInputCurrency']")?.replaceChildren(t("label.incomeCurrency"));
+      document.querySelector("label[for='rateHkdToCny']")?.replaceChildren(t("label.hkdToCny"));
+      document.querySelector("label[for='rateCompareHkdToCny']")?.replaceChildren(t("label.hkdToCny"));
+      document.querySelector("label[for='rateCompareIncludeCommute']")?.replaceChildren(t("label.rateCompareIncludeCommute"));
+      document.querySelector("label[for='rateCompareDeductLunch']")?.replaceChildren(t("label.rateCompareDeductLunch"));
+
+      ["rateInputCurrency"].forEach((selectId) => {
+        document.querySelector(`#${selectId}`)?.querySelectorAll("option").forEach((option) => {
+          option.textContent = t(`currency.${option.value}`);
+        });
+      });
+
+      ["", "offerA", "offerB"].forEach((prefix) => {
+        Object.entries(rateFieldLabels).forEach(([name, key]) => {
+          const fieldId = rateFieldId(prefix, name);
+          const label = document.querySelector(`label[for="${fieldId}"]`);
+          if (label) label.textContent = t(key);
+        });
+        document.querySelector(`#${rateFieldId(prefix, "rateInputCurrency")}`)?.querySelectorAll("option").forEach((option) => {
+          option.textContent = t(`currency.${option.value}`);
+        });
+        document.querySelector(`#${rateFieldId(prefix, "rateRegion")}`)?.querySelectorAll("option").forEach((option) => {
+          option.textContent = t(`region.${option.value}`);
+        });
+        const scheduleSelect = document.querySelector(`#${rateFieldId(prefix, "scheduleMode")}`);
+        scheduleSelect?.querySelectorAll("option").forEach((option) => {
+          option.textContent = t(`scheduleMode.${option.value}`);
+        });
+        updateRateSalaryLabels(prefix);
+      });
+
+      document.querySelectorAll("[data-weekday]").forEach((node) => {
+        node.textContent = t(`weekday.${node.dataset.weekday}`);
+      });
+
+      document.querySelectorAll("#rateComparePanel thead th").forEach((th, index) => {
+        const keys = ["compare.metric", null, null, "compare.diffHeader"];
+        if (keys[index]) th.textContent = t(keys[index]);
+      });
+      document.querySelectorAll("#comparePanel thead th").forEach((th, index) => {
+        const keys = ["compare.metric", null, null, "compare.diffHeader"];
+        if (keys[index]) th.textContent = t(keys[index]);
+      });
+    }
+
     function updateVisibility() {
       const isCompare = state.mode === "compare";
+      const isRate = state.calculatorType === "rate";
+
+      document.querySelectorAll("[data-calc-type]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.calcType === state.calculatorType));
+      });
       document.querySelectorAll("[data-mode]").forEach((button) => {
         button.setAttribute("aria-pressed", String(button.dataset.mode === state.mode));
       });
       document.querySelectorAll("[data-region]").forEach((button) => {
         button.setAttribute("aria-pressed", String(button.dataset.region === state.region));
       });
-      document.querySelectorAll(".single-only").forEach((node) => {
+
+      document.querySelectorAll(".tax-only").forEach((node) => {
+        node.classList.toggle("hidden", isRate);
+      });
+      document.querySelectorAll(".rate-only").forEach((node) => {
+        const showRatePanel = isRate && ((node.classList.contains("single-only") && !isCompare)
+          || (node.classList.contains("compare-only") && isCompare));
+        node.classList.toggle("hidden", !showRatePanel);
+      });
+
+      document.querySelectorAll(".single-only:not(.tax-only):not(.rate-only)").forEach((node) => {
         node.classList.toggle("hidden", isCompare);
       });
-      document.querySelectorAll(".compare-only").forEach((node) => {
+      document.querySelectorAll(".compare-only:not(.tax-only):not(.rate-only)").forEach((node) => {
         node.classList.toggle("hidden", !isCompare);
       });
+
+      if (!isRate) {
+        document.querySelectorAll(".single-only.tax-only").forEach((node) => {
+          node.classList.toggle("hidden", isCompare);
+        });
+        document.querySelectorAll(".compare-only.tax-only").forEach((node) => {
+          node.classList.toggle("hidden", !isCompare);
+        });
+      }
+
       modeLayout.classList.toggle("compare-active", isCompare);
+
+      if (isRate) {
+        syncRateScheduleVisibility("");
+        syncRateScheduleVisibility("offerA");
+        syncRateScheduleVisibility("offerB");
+        updateRateSalaryLabels("");
+        updateRateSalaryLabels("offerA");
+        updateRateSalaryLabels("offerB");
+        updateRateInputCurrencyNote("", state.region);
+        updateRateInputCurrencyNote("offerA", getRateRegion("offerA"));
+        updateRateInputCurrencyNote("offerB", getRateRegion("offerB"));
+        document.querySelectorAll(".rate-exchange-only").forEach((node) => {
+          node.classList.toggle("hidden", isCompare || !needsRateExchangeForSingle());
+        });
+        document.querySelectorAll(".rate-compare-exchange").forEach((node) => {
+          node.classList.toggle("hidden", !isCompare);
+        });
+        if (isCompare) {
+          currencyPill.textContent = t("pill.cnyCompare");
+        } else {
+          currencyPill.textContent = t("pill.input", { currency: currencyTag(getRateInputCurrency("")) });
+        }
+        return;
+      }
 
       const offerARegion = document.querySelector("#offerARegion").value;
       const offerBRegion = document.querySelector("#offerBRegion").value;
@@ -3095,6 +4310,15 @@
       syncBonusInputs();
       updateVisibility();
 
+      if (state.calculatorType === "rate") {
+        if (state.mode === "compare") {
+          renderRateComparison();
+        } else {
+          renderRateSingle();
+        }
+        return;
+      }
+
       if (state.mode === "compare") {
         const regionA = document.querySelector("#offerARegion").value;
         const regionB = document.querySelector("#offerBRegion").value;
@@ -3149,6 +4373,8 @@
         });
     }
 
+    initRatePerDaySchedule();
+    initRateCompareFields();
     initLanguage();
     if (langToggleBtn) {
       langToggleBtn.addEventListener("click", () => {
@@ -3158,6 +4384,8 @@
     initContributionInputs();
     bindRateInput(hkdToCnyInput);
     bindRateInput(singleHkdToCnyInput);
+    bindRateInput(document.querySelector("#rateHkdToCny"));
+    bindRateInput(document.querySelector("#rateCompareHkdToCny"));
     if (refreshRateBtn) {
       refreshRateBtn.addEventListener("click", async () => {
         refreshRateBtn.disabled = true;
@@ -3183,6 +4411,12 @@
         refreshRateBtn.disabled = false;
       });
     }
+    document.querySelectorAll("[data-calc-type]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.calculatorType = button.dataset.calcType;
+        render();
+      });
+    });
     document.querySelectorAll("[data-mode]").forEach((button) => {
       button.addEventListener("click", () => {
         state.mode = button.dataset.mode;
@@ -3193,6 +4427,7 @@
       button.addEventListener("click", () => {
         state.region = button.dataset.region;
         syncDefaultInputCurrency("", state.region);
+        syncDefaultRateCurrency("", state.region);
         render();
       });
     });
@@ -3204,8 +4439,16 @@
       syncDefaultInputCurrency("offerB", document.querySelector("#offerBRegion").value);
       render();
     });
+    form.addEventListener("change", (event) => {
+      if (event.target.matches("[data-rate-schedule-mode]")) {
+        syncRateScheduleVisibility(event.target.dataset.rateScheduleMode);
+      }
+      if (event.target.matches("[data-rate-region-select]")) {
+        syncDefaultRateCurrency(event.target.dataset.rateRegionSelect, event.target.value);
+      }
+      render();
+    });
     form.addEventListener("input", render);
-    form.addEventListener("change", render);
     initExchangeRate();
   </script>
 </body>
