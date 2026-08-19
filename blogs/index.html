@@ -5,5 +5,28 @@ permalink: /blogs/
 ---
 
 <div class="page-nav">
-  <a href="{{ site.baseurl }}/">← Back to Home</a>
+  <a href="{{ '/' | relative_url }}">← Back to Home</a>
 </div>
+
+<p class="blog-intro">Notes on multimodal models, efficient AI, and applied machine learning.</p>
+
+{% if site.posts.size > 0 %}
+<div class="blog-list">
+  {% for post in site.posts %}
+  <article class="blog-item">
+    <h2><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
+    <div class="blog-meta">
+      {% if post.status == "draft" %}
+        <span class="status-badge">Draft · not published</span>
+      {% else %}
+        <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %e, %Y" }}</time>
+        {% if post.status == "ongoing" %}<span class="status-badge">Ongoing</span>{% endif %}
+      {% endif %}
+    </div>
+    {% if post.description %}<p>{{ post.description }}</p>{% else %}{{ post.excerpt }}{% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<p class="blog-empty">The first posts are being prepared.</p>
+{% endif %}

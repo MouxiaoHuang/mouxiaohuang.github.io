@@ -3,20 +3,30 @@ layout: default
 ---
 
 <article class="post">
-  <h1>{{ page.title }}</h1>
+  <header class="post-header">
+    <h1>{{ page.title }}</h1>
+
+    <div class="post-meta">
+      {% if page.status == "draft" %}
+        <span class="status-badge">Draft · not published</span>
+      {% else %}
+        <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%B %e, %Y" }}</time>
+        {% if page.status == "ongoing" %}<span class="status-badge">Ongoing</span>{% endif %}
+      {% endif %}
+      {% if page.tags and page.tags != empty %}
+        <span class="post-tags">{{ page.tags | join: " · " }}</span>
+      {% endif %}
+    </div>
+  </header>
 
   <div class="entry">
     {{ content }}
   </div>
 
-  <div class="date">
-    Written on {{ page.date | date: "%B %e, %Y" }}
-  </div>
-
   <div class="post-nav">
-    <a href="{{ site.baseurl }}/blogs/">Back to Blogs</a>
-    <a href="{{ site.baseurl }}/">Back to Home</a>
+    <a href="{{ '/blogs/' | relative_url }}">← Back to Blogs</a>
+    <a href="{{ '/' | relative_url }}">Back to Home</a>
   </div>
 
-  {% include disqus.html %}
+  {% unless page.status == "draft" %}{% include disqus.html %}{% endunless %}
 </article>
