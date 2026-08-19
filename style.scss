@@ -491,11 +491,6 @@ html[data-theme="dark"] {
   border-bottom: none;
 }
 
-.blog-intro {
-  margin: 0 0 24px;
-  color: var(--muted);
-}
-
 .blog-list {
   margin-top: 8px;
 }
@@ -534,14 +529,6 @@ html[data-theme="dark"] {
 
 .blog-meta {
   margin-top: 4px;
-}
-
-.blog-empty {
-  padding: 18px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--muted);
 }
 
 .status-badge {

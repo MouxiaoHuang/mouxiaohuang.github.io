@@ -8,8 +8,6 @@ permalink: /blogs/
   <a href="{{ '/' | relative_url }}">← Back to Home</a>
 </div>
 
-<p class="blog-intro">Notes on multimodal models, efficient AI, and applied machine learning.</p>
-
 {% if site.posts.size > 0 %}
 <div class="blog-list">
   {% for post in site.posts %}
@@ -27,6 +25,4 @@ permalink: /blogs/
   </article>
   {% endfor %}
 </div>
-{% else %}
-<p class="blog-empty">The first posts are being prepared.</p>
 {% endif %}
